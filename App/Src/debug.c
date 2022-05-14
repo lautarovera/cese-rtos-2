@@ -49,6 +49,14 @@
 
 #define PRINT_BUFFER_SIZE       50u
 
+#define RX_BUFFER_SIZE 5
+#define UART_RX_IT_COUNT 1
+
+#define USARTx_IRQn     USART3_IRQn
+
+/* Exported functions ------------------------------------------------------- */
+
+void USART3_IRQHandler(void);
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
@@ -57,8 +65,13 @@
 
 UART_HandleTypeDef uart_handler;
 
-static uint8_t buffer[PRINT_BUFFER_SIZE];
+//static uint8_t buffer[PRINT_BUFFER_SIZE];
 
+static uint8_t aRXBufferUser[RX_BUFFER_SIZE];
+static uint8_t aRXBufferA[RX_BUFFER_SIZE];
+
+static bool rxFlag;
+static bool txFlag;
 /********************** external data definition *****************************/
 
 /********************** internal functions definition ************************/
@@ -78,24 +91,86 @@ bool debug_init(void)
   uart_handler.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   uart_handler.Init.OverSampling = UART_OVERSAMPLING_16;
 
+  /*
+   NVIC configuration if you need to use interrupt process (HAL_UART_Transmit_IT()
+   and HAL_UART_Receive_IT() APIs):
+   (+++) Configure the USARTx interrupt priority.
+   (+++) Enable the NVIC USART IRQ handle.
+
+   The specific UART interrupts (Transmission complete interrupt,
+   RXNE interrupt and Error Interrupts) will be managed using the macros
+   __HAL_UART_ENABLE_IT() and __HAL_UART_DISABLE_IT() inside the transmit
+   and receive process.
+   */
+
   if (HAL_UART_Init(&uart_handler) != HAL_OK)
   {
     result = false;
   }
+
+  HAL_NVIC_SetPriority(USARTx_IRQn, 0, 1);
+  HAL_NVIC_EnableIRQ(USARTx_IRQn);
+  //__HAL_UART_ENABLE_IT(&uart_handler, UART_IT_RXNE);
+
+  if (HAL_OK != HAL_UART_Receive_IT(&uart_handler, aRXBufferUser, UART_RX_IT_COUNT))
+  {
+    result = false;
+  }
+
+  HAL_UART_Transmit(&uart_handler, (uint8_t*)"OKAY", RX_BUFFER_SIZE, HAL_MAX_DELAY);
 
   return result;
 }
 
 void debug_printf(const char *format, ...)
 {
-  memset(buffer, 0, PRINT_BUFFER_SIZE);
+  /*
+   memset(buffer, 0, PRINT_BUFFER_SIZE);
 
-  va_list va;
-  va_start(va, format);
-  vsnprintf((char *)buffer, PRINT_BUFFER_SIZE, format, va);
-  va_end(va);
+   va_list va;
+   va_start(va, format);
+   vsnprintf((char*)buffer, PRINT_BUFFER_SIZE, format, va);
+   va_end(van);
 
   HAL_UART_Transmit(&uart_handler, buffer, PRINT_BUFFER_SIZE, HAL_MAX_DELAY);
+  */
+  if (rxFlag)
+  {
+    HAL_UART_Transmit_IT(&uart_handler, aRXBufferA, UART_RX_IT_COUNT);
+    rxFlag = false;
+  }
+  if (txFlag)
+    {
+      HAL_UART_Transmit(&uart_handler, (uint8_t*)"TXMSG", RX_BUFFER_SIZE, HAL_MAX_DELAY);
+      txFlag = false;
+    }
 }
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
+{
+  rxFlag = true;
+  for (uint8_t i = 0; i < UART_RX_IT_COUNT; i++)
+  {
+    aRXBufferA[i] = aRXBufferUser[i];
+  }
+
+  UART_Start_Receive_IT(UartHandle, aRXBufferUser, UART_RX_IT_COUNT);
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  txFlag = true;
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+}
+
+/**
+ * @brief This function handles USART3 global interrupt.
+ */
+void USART3_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&uart_handler);
+}
 /********************** end of file ******************************************/
