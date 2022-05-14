@@ -47,7 +47,8 @@
 
 /********************** macros and definitions *******************************/
 
-#define PRINT_RATE_MS        500u
+#define PRINT_RATE_MS        5000u
+#define TIMEOUT_MS           500u
 
 #define DEBUG_PRINT(...)\
   taskENTER_CRITICAL();\
@@ -55,6 +56,8 @@
   taskEXIT_CRITICAL()\
 
 /********************** internal data declaration ****************************/
+
+TimerHandle_t timer;
 
 /********************** internal functions declaration ***********************/
 
@@ -105,14 +108,22 @@ static bool sys_clk_cfg(void)
   return result;
 }
 
+static void timer_callback(TimerHandle_t timer_handle)
+{
+  DEBUG_PRINT("Timeout!\r\n");
+}
+
 static void task_rx_print(void *pvParameters)
 {
   debug_init();
+
+  xTimerStart(timer, 0u);
 
   for (;;)
   {
     DEBUG_PRINT("Hello World\r\n");
     vTaskDelay(PRINT_RATE_MS / portTICK_RATE_MS);
+    xTimerReset(timer, 0u);
   }
 }
 
@@ -131,6 +142,8 @@ void mcu_init(void)
 void app(void)
 {
   BaseType_t res;
+
+  timer = xTimerCreate("", TIMEOUT_MS / portTICK_RATE_MS, pdFALSE, NULL, timer_callback);
 
   res = xTaskCreate(task_rx_print, (const char*)"TaskPrint", configMINIMAL_STACK_SIZE, (void*) NULL,
                     (tskIDLE_PRIORITY + 1ul), (xTaskHandle*) NULL);

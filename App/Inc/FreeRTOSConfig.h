@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /*
  * FreeRTOS Kernel V10.3.1
  * Portion Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -26,7 +25,6 @@
  *
  * 1 tab == 4 spaces!
  */
-/* USER CODE END Header */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
@@ -43,9 +41,7 @@
  * See http://www.freertos.org/a00110.html
  *----------------------------------------------------------*/
 
-/* USER CODE BEGIN Includes */
 /* Section where include file can be added */
-/* USER CODE END Includes */
 
 /* Ensure definitions are only used by the compiler, and not by the assembler. */
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
@@ -61,26 +57,26 @@
 #define configSUPPORT_DYNAMIC_ALLOCATION         1
 #define configUSE_IDLE_HOOK                      0
 #define configUSE_TICK_HOOK                      0
-#define configCPU_CLOCK_HZ                       ( SystemCoreClock )
+#define configCPU_CLOCK_HZ                       (SystemCoreClock)
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
-#define configMAX_PRIORITIES                     ( 7 )
+#define configMAX_PRIORITIES                     (7)
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
 #define configTOTAL_HEAP_SIZE                    ((size_t)15360)
-#define configMAX_TASK_NAME_LEN                  ( 16 )
+#define configMAX_TASK_NAME_LEN                  (16)
 #define configUSE_16_BIT_TICKS                   0
 #define configUSE_MUTEXES                        1
-#define configUSE_COUNTING_SEMAPHORES			 1
+#define configUSE_COUNTING_SEMAPHORES	         1
 #define configQUEUE_REGISTRY_SIZE                8
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
+#define configUSE_TIMERS                         1
+#define configCHECK_FOR_STACK_OVERFLOW	         0
+#define configTIMER_TASK_PRIORITY                (tskIDLE_PRIORITY + 4ul)
+#define configTIMER_TASK_STACK_DEPTH             (configMINIMAL_STACK_SIZE)
+#define configTIMER_QUEUE_LENGTH                 1
 
-// runtime checks
-#define configCHECK_FOR_STACK_OVERFLOW			 0
-
-/* USER CODE BEGIN MESSAGE_BUFFER_LENGTH_TYPE */
 /* Defaults to size_t for backward compatibility, but can be changed
    if lengths will always be less than the number of bytes in a size_t. */
 #define configMESSAGE_BUFFER_LENGTH_TYPE         size_t
-/* USER CODE END MESSAGE_BUFFER_LENGTH_TYPE */
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
@@ -126,9 +122,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
-/* USER CODE BEGIN 1 */
 #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
-/* USER CODE END 1 */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
 standard names. */
@@ -140,8 +134,6 @@ standard names. */
 
 /* #define xPortSysTickHandler SysTick_Handler */
 
-/* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
-/* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */
