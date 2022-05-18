@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2022 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -43,8 +43,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 /* Define the strings that will be passed in as the task parameters.  These are
-defined const and off the stack to ensure they remain valid when the tasks are
-executing. */
+ defined const and off the stack to ensure they remain valid when the tasks are
+ executing. */
 const char *pcTextForTaskStats = "Task Stats  is running\r\n";
 const char *pcTextForTaskDemo1 = "Task Demo 1 is running\r\n";
 const char *pcTextForTaskDemo2 = "Task Demo 2 is running\r\n";
@@ -52,7 +52,7 @@ const char *pcTextForTaskDemo2 = "Task Demo 2 is running\r\n";
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart3;
 
@@ -68,13 +68,13 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_TIM2_Init(void);
-void vTaskStats_(void const * argument);
-void vTaskDemo_(void const * argument);
+void vTaskStats_(void const *argument);
+void vTaskDemo_(void const *argument);
 
 /* USER CODE BEGIN PFP */
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
-extern void vTaskStats(void const * argument);
-extern void vTaskDemo(void const * argument);
+extern void vTaskStats(void const *argument);
+extern void vTaskDemo(void const *argument);
 extern volatile unsigned long ulHighFrequencyTimerTicks;
 #endif
 /* USER CODE END PFP */
@@ -85,13 +85,13 @@ extern volatile unsigned long ulHighFrequencyTimerTicks;
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	const char *pcTextForMain = "freertos_book_Example1_6 is running: Print run time statistics and task list\r\n\n";
+  const char *pcTextForMain = "freertos_book_Example1_6 is running: Print run time statistics and task list\r\n\n";
 
   /* USER CODE END 1 */
 
@@ -116,33 +116,33 @@ int main(void)
   MX_USART3_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-    vPrintString( pcTextForMain );
+  vPrintString(pcTextForMain);
 
-#if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
-    /* Start timer */
-    HAL_TIM_Base_Start_IT(&htim2);
+#if(TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
+  /* Start timer */
+  HAL_TIM_Base_Start_IT(&htim2);
 
-    /* Create the thread(s) */
-	/* definition and creation of TaskStats */
-    osThreadDef( TaskStats, vTaskStats, osPriorityAboveNormal, 0, 128+32 );
-    TaskStatsHandle = osThreadCreate( osThread(TaskStats), (void*)pcTextForTaskStats );
+  /* Create the thread(s) */
+  /* definition and creation of TaskStats */
+  osThreadDef(TaskStats, vTaskStats, osPriorityAboveNormal, 0, 128 + 32);
+  TaskStatsHandle = osThreadCreate(osThread(TaskStats), (void*)pcTextForTaskStats);
 
-    /* Check the task was created successfully */
-    configASSERT( TaskStatsHandle != NULL );
+  /* Check the task was created successfully */
+  configASSERT(TaskStatsHandle != NULL);
 
-    /* definition and creation of DemoTask1 */
-    osThreadDef( TaskDemo1, vTaskDemo, osPriorityNormal, 0, 128 );
-    TaskDemo1Handle = osThreadCreate( osThread(TaskDemo1), (void*)pcTextForTaskDemo1 );
+  /* definition and creation of DemoTask1 */
+  osThreadDef(TaskDemo1, vTaskDemo, osPriorityNormal, 0, 128);
+  TaskDemo1Handle = osThreadCreate(osThread(TaskDemo1), (void*)pcTextForTaskDemo1);
 
-    /* Check the task was created successfully */
-    configASSERT( TaskDemo1Handle != NULL );
+  /* Check the task was created successfully */
+  configASSERT(TaskDemo1Handle != NULL);
 
-    /* definition and creation of DemoTask2 */
-    osThreadDef( TaskDemo2, vTaskDemo, osPriorityNormal, 0, 128 );
-    TaskDemo2Handle = osThreadCreate( osThread(TaskDemo2), (void*)pcTextForTaskDemo2 );
+  /* definition and creation of DemoTask2 */
+  osThreadDef(TaskDemo2, vTaskDemo, osPriorityNormal, 0, 128);
+  TaskDemo2Handle = osThreadCreate(osThread(TaskDemo2), (void*)pcTextForTaskDemo2);
 
-    /* Check the task was created successfully */
-    configASSERT( TaskDemo2Handle != NULL );
+  /* Check the task was created successfully */
+  configASSERT(TaskDemo2Handle != NULL);
 #endif
 
   /* USER CODE END 2 */
@@ -198,22 +198,22 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-  */
+   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -228,9 +228,8 @@ void SystemClock_Config(void)
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -243,10 +242,10 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief TIM2 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_TIM2_Init(void)
 {
 
@@ -261,9 +260,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 2-1;
+  htim2.Init.Prescaler = 2 - 1;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 42-1;
+  htim2.Init.Period = 42 - 1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -288,10 +287,10 @@ static void MX_TIM2_Init(void)
 }
 
 /**
-  * @brief USART3 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief USART3 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_USART3_UART_Init(void)
 {
 
@@ -315,16 +314,16 @@ static void MX_USART3_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART3_Init 2 */
-
+  __HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
   /* USER CODE END USART3_Init 2 */
 
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -337,7 +336,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LD1_Pin | LD3_Pin | LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : USER_Btn_Pin */
   GPIO_InitStruct.Pin = USER_Btn_Pin;
@@ -346,7 +345,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(USER_Btn_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD1_Pin LD3_Pin LD2_Pin */
-  GPIO_InitStruct.Pin = LD1_Pin|LD3_Pin|LD2_Pin;
+  GPIO_InitStruct.Pin = LD1_Pin | LD3_Pin | LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -360,75 +359,77 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN Header_vTaskStats_ */
 /**
-  * @brief  Function implementing the TaskStats thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+ * @brief  Function implementing the TaskStats thread.
+ * @param  argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_vTaskStats_ */
-void vTaskStats_(void const * argument)
+void vTaskStats_(void const *argument)
 {
   /* USER CODE BEGIN 5 */
-	/* The string to print out is passed in via the parameter.  Cast this to a
-	   character pointer. */
-	char *pcTaskName;
-	pcTaskName = ( char * ) argument;
+  /* The string to print out is passed in via the parameter.  Cast this to a
+   character pointer. */
+  char *pcTaskName;
+  pcTaskName = (char*)argument;
 
-	/* Print out the name of this task. */
-	vPrintString( pcTaskName );
+  /* Print out the name of this task. */
+  vPrintString(pcTaskName);
 
-	/* Infinite loop */
-	for(;;)
-	{
-	  osDelay(1);
-	}
+  /* Infinite loop */
+  for (;;)
+  {
+    osDelay(1);
+  }
   /* USER CODE END 5 */
 }
 
 /* USER CODE BEGIN Header_vTaskDemo_ */
 /**
-* @brief Function implementing the TaskDemo1 thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the TaskDemo1 thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_vTaskDemo_ */
-void vTaskDemo_(void const * argument)
+void vTaskDemo_(void const *argument)
 {
   /* USER CODE BEGIN vTaskDemo_ */
-	/* The string to print out is passed in via the parameter.  Cast this to a
-	   character pointer. */
-	char *pcTaskName;
-	pcTaskName = ( char * ) argument;
+  /* The string to print out is passed in via the parameter.  Cast this to a
+   character pointer. */
+  char *pcTaskName;
+  pcTaskName = (char*)argument;
 
-	/* Print out the name of this task. */
-	vPrintString( pcTaskName );
+  /* Print out the name of this task. */
+  vPrintString(pcTaskName);
 
-	/* Infinite loop */
-	for(;;)
-	{
-	  osDelay(1);
-	}
+  /* Infinite loop */
+  for (;;)
+  {
+    osDelay(1);
+  }
   /* USER CODE END vTaskDemo_ */
 }
 
 /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM7 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
+ * @brief  Period elapsed callback in non blocking mode
+ * @note   This function is called  when TIM7 interrupt took place, inside
+ * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+ * a global variable "uwTick" used as application time base.
+ * @param  htim : TIM handle
+ * @retval None
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
-    if (htim->Instance == TIM2) {
-    	ulHighFrequencyTimerTicks++;
-	}
+  if (htim->Instance == TIM2)
+  {
+    ulHighFrequencyTimerTicks++;
+  }
 #endif
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM7) {
+  if (htim->Instance == TIM7)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
@@ -437,9 +438,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
