@@ -48,6 +48,7 @@
 const char *pcTextForTaskStats = "Task Stats  is running\r\n";
 const char *pcTextForTaskDemo1 = "Task Demo 1 is running\r\n";
 const char *pcTextForTaskDemo2 = "Task Demo 2 is running\r\n";
+const char *pcTextForTaskTest =  "Task Test is running\r\n";
 
 /* USER CODE END PM */
 
@@ -59,6 +60,7 @@ UART_HandleTypeDef huart3;
 osThreadId TaskStatsHandle;
 osThreadId TaskDemo1Handle;
 osThreadId TaskDemo2Handle;
+osThreadId TaskTestHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -75,6 +77,7 @@ void vTaskDemo_(void const *argument);
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
 extern void vTaskStats(void const *argument);
 extern void vTaskDemo(void const *argument);
+extern void task_test(void const *argument);
 extern volatile unsigned long ulHighFrequencyTimerTicks;
 #endif
 /* USER CODE END PFP */
@@ -124,25 +127,31 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of TaskStats */
-  osThreadDef(TaskStats, vTaskStats, osPriorityAboveNormal, 0, 128 + 32);
-  TaskStatsHandle = osThreadCreate(osThread(TaskStats), (void*)pcTextForTaskStats);
+  //osThreadDef(TaskStats, vTaskStats, osPriorityAboveNormal, 0, 128 + 32);
+  //TaskStatsHandle = osThreadCreate(osThread(TaskStats), (void*)pcTextForTaskStats);
 
   /* Check the task was created successfully */
-  configASSERT(TaskStatsHandle != NULL);
+  //configASSERT(TaskStatsHandle != NULL);
 
   /* definition and creation of DemoTask1 */
-  osThreadDef(TaskDemo1, vTaskDemo, osPriorityNormal, 0, 128);
-  TaskDemo1Handle = osThreadCreate(osThread(TaskDemo1), (void*)pcTextForTaskDemo1);
+  //osThreadDef(TaskDemo1, vTaskDemo, osPriorityNormal, 0, 128);
+  //TaskDemo1Handle = osThreadCreate(osThread(TaskDemo1), (void*)pcTextForTaskDemo1);
 
   /* Check the task was created successfully */
-  configASSERT(TaskDemo1Handle != NULL);
+  //configASSERT(TaskDemo1Handle != NULL);
 
   /* definition and creation of DemoTask2 */
-  osThreadDef(TaskDemo2, vTaskDemo, osPriorityNormal, 0, 128);
-  TaskDemo2Handle = osThreadCreate(osThread(TaskDemo2), (void*)pcTextForTaskDemo2);
+  //osThreadDef(TaskDemo2, vTaskDemo, osPriorityNormal, 0, 128);
+  //TaskDemo2Handle = osThreadCreate(osThread(TaskDemo2), (void*)pcTextForTaskDemo2);
 
   /* Check the task was created successfully */
-  configASSERT(TaskDemo2Handle != NULL);
+  //configASSERT(TaskDemo2Handle != NULL);
+
+  /* definition and creation of test_task */
+  osThreadDef(task_test, task_test, osPriorityNormal, 0, 128);
+  TaskTestHandle = osThreadCreate(osThread(task_test), (void*)pcTextForTaskTest);
+  configASSERT(TaskTestHandle != NULL);
+
 #endif
 
   /* USER CODE END 2 */

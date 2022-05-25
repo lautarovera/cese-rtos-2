@@ -46,7 +46,14 @@
 
 /********************** macros and definitions *******************************/
 
+#define UART_RX_IT_COUNT 1
+
 /********************** internal data declaration ****************************/
+
+static void (*tx_cb_func)(uint8_t*);
+static void (*rx_cb_func)(uint8_t*);
+
+static uint8_t rx_buffer[UART_RX_IT_COUNT];
 
 /********************** internal functions declaration ***********************/
 
@@ -54,25 +61,34 @@
 
 /********************** external data definition *****************************/
 
+extern UART_HandleTypeDef huart3;
+
 /********************** internal functions definition ************************/
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  (*rx_cb_func)(rx_buffer);
+
+  UART_Start_Receive_IT(huart, rx_buffer, UART_RX_IT_COUNT);
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  (*tx_cb_func)((uint8_t*)"TX");
+}
 /********************** external functions definition ************************/
 
+void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
+{
+  tx_cb_func = tx_cb;
+  rx_cb_func = rx_cb;
+
+  UART_Start_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
+}
+
+void c1_driver_tx(uint8_t *data){
+  //CUIDADO ACA, QUIZAS HAY QUE HACER UN MEMCPY DE DATA? SE ESTA PASANDO EL PUNTERO
+  HAL_UART_Transmit_IT(&huart3, data, 1u);
+}
 /********************** end of file ******************************************/
 
-void c1_driver_tx_byte(UART_HandleTypeDef uart_handler, const uint8_t *data)
-{
-  (void)HAL_UART_Transmit_IT(&uart_handler, data, 1u);
-}
-
-void c1_driver_rx_byte(UART_HandleTypeDef uart_handler, uint8_t *data)
-{
-  (void)HAL_UART_Receive_IT(&uart_handler, data, 1u);
-}
-
-void c1_driver_rx_handler(UART_HandleTypeDef uart_handler, uint8_t *data)
-{
-  uint8_t data = 0u;
-
-  c1_driver_rx_byte(uart_handler, &data);
-}

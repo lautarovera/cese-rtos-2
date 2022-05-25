@@ -113,11 +113,11 @@ void vPrintString( const char *pcString )
 {
 	/* Print the string, using a critical section as a crude method of mutual
 	exclusion. */
-	taskENTER_CRITICAL();
+	//taskENTER_CRITICAL();
 	{
 		HAL_UART_Transmit( &huart3, (uint8_t *)pcString, (uint16_t) strlen((char *)pcString), HAL_MAX_DELAY );
 	}
-	taskEXIT_CRITICAL();
+	//taskEXIT_CRITICAL();
 }
 /*-----------------------------------------------------------*/
 

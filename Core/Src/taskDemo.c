@@ -31,20 +31,18 @@
  *
  */
 
-
 /*--------------------------------------------------------------------*-
 
-    taskDemo.c (Released 2022-05)
+ taskDemo.c (Released 2022-05)
 
---------------------------------------------------------------------
+ --------------------------------------------------------------------
 
-    task file for FreeRTOS - Event Driven System (EDS) - Project for
-    STM32F429ZI_NUCLEO_144.
+ task file for FreeRTOS - Event Driven System (EDS) - Project for
+ STM32F429ZI_NUCLEO_144.
 
-    See readme.txt for project information.
+ See readme.txt for project information.
 
--*--------------------------------------------------------------------*/
-
+ -*--------------------------------------------------------------------*/
 
 // ------ Includes -------------------------------------------------
 /* Project includes. */
@@ -62,6 +60,8 @@
 /* Application includes. */
 #include "taskDemo.h"
 
+#include "c1_driver.h"
+
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
 // ------ Private constants ----------------------------------------
 
@@ -70,53 +70,60 @@
 // ------ Public functions prototypes ------------------------------
 
 /* Task Function thread */
-void vTaskDemo( void const * argument );
-
+void vTaskDemo(void const *argument);
+void task_test(void const *argument);
 // ------ Public functions -----------------------------------------
 
 /*------------------------------------------------------------------*/
 /* Task Function thread */
-void vTaskDemo( void const * argument )
+void vTaskDemo(void const *argument)
 {
-	/* The string to print out is passed in via the parameter.  Cast this to a
-	   character pointer. */
-	char *pcTaskName;
-	pcTaskName = ( char * ) argument;
+  /* The string to print out is passed in via the parameter.  Cast this to a
+   character pointer. */
+  char *pcTaskName;
+  pcTaskName = (char*)argument;
 
-	/*  Declare & Initialize Task Function variables */
-	volatile unsigned long ulLoopCounter;
-	const unsigned long ulMaxLoopCount = 0x1fffUL;
-	uint32_t xLastExecutionTime;
+  /* Print out the name of this task. */
+  vPrintString(pcTaskName);
 
-	/* The task will run every 5 milliseconds. */
-	const uint32_t xBlockPeriod = 5;
 
-	/* Initialise xLastExecutionTime to the current time.  This is the only
-	   time this variable needs to be written to explicitly.  Afterwards it is
-	   updated internally within the osDelayUnitl() API function. */
-	xLastExecutionTime = osKernelSysTick();
 
-	/* Print out the name of this task. */
-	vPrintString( pcTaskName );
+  /* As per most tasks, this task is implemented in an infinite loop. */
+  for (;;)
+  {
 
-	/* As per most tasks, this task is implemented in an infinite loop. */
-	for( ;; )
-	{
-		/* Wait until it is time to run this task again. */
-		osDelayUntil( &xLastExecutionTime, xBlockPeriod );
+  }
+}
 
-		/* This loop is just to ensure the task uses up enough processing time
-		   to register in the run time statistics. */
-		for( ulLoopCounter = 0; ulLoopCounter < ulMaxLoopCount; ulLoopCounter++ )
-		{
-			/* There is nothing to do here.  Just perform a "no operation" to
-			   ensure there are some instructions generated. */
-			__asm volatile( "NOP " );
-		}
-	}
+/* Task Function thread */
+void task_test(void const *argument)
+{
+  /* The string to print out is passed in via the parameter.  Cast this to a
+   character pointer. */
+  char *pcTaskName;
+  pcTaskName = (char*)argument;
+
+  char myStr[50] = {};
+  uint16_t counter = 0;
+
+  uint32_t xLastExecutionTime = osKernelSysTick();
+  const uint32_t xBlockPeriod = 5000;
+  /* Print out the name of this task. */
+  vPrintString(pcTaskName);
+
+
+  c1_driver_init(&vPrintString, &vPrintString);
+  /* As per most tasks, this task is implemented in an infinite loop. */
+  for (;;)
+  {
+    counter++;
+    sprintf(myStr,"%u", counter);
+    c1_driver_tx((uint8_t*)myStr);
+    osDelayUntil( &xLastExecutionTime, xBlockPeriod );
+  }
 }
 #endif
 
 /*------------------------------------------------------------------*-
-  ---- END OF FILE -------------------------------------------------
--*------------------------------------------------------------------*/
+ ---- END OF FILE -------------------------------------------------
+ -*------------------------------------------------------------------*/

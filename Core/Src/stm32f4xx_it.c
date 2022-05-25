@@ -182,22 +182,7 @@ void TIM2_IRQHandler(void)
 void USART3_IRQHandler(void)
 {
   /* USER CODE BEGIN USART3_IRQn 0 */
-  if (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_TC))
-  {
-    c2_parser_tx_handler();
-  }
-  else if (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_RXNE))
-  {
-    uint8_t data = 0u;
-    c1_driver_rx_handler(huart3, &data);
-    c2_parser_rx_handler(data);
-  }
-  else
-  {
-    c2_parser_error_handler();
-  }
-  /* To continous reception, avoid entering the HAL IRQ handler */
-  return;
+
   /* USER CODE END USART3_IRQn 0 */
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */

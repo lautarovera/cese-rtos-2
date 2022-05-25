@@ -89,7 +89,7 @@ static void process_som(msg_t *msg)
 
   msg = (msg_t*)osPoolAlloc(msg_pool_id);
 }
-
+/*
 static void process_eom(msg_t *msg)
 {
   if (NULL != msg)
@@ -121,7 +121,7 @@ static void process_msg(uint8_t data, msg_t *msg)
     }
   }
 }
-
+*/
 /********************** external functions definition ************************/
 //if (data >= '0' && data <= '9' || data >= 'A' && data <= 'Z')
 //{
@@ -139,7 +139,7 @@ void c2_parser_tx_handler(void)
 {
 
 }
-
+/*
 void c2_parser_rx_handler(uint8_t data)
 {
   uint8_t data = 0u;
@@ -158,7 +158,7 @@ void c2_parser_rx_handler(uint8_t data)
       process_msg(data, msg);
   }
 }
-
+*/
 void c2_parser_error_handler(void)
 {
 
