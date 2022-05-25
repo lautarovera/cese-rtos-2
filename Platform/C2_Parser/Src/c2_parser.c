@@ -55,12 +55,12 @@
 
 typedef struct
 {
+    uint8_t som;
     uint32_t id;
     uint8_t c;
-    uint8_t data[MAX_PAYLOAD_SIZE];
+    uint8_t *data; //[MAX_PAYLOAD_SIZE];
     uint16_t crc;
-    uint8_t reserved_1;
-    uint8_t reserved_2;
+    uint8_t eom;
 } msg_t;
 
 /********************** internal functions declaration ***********************/
@@ -75,7 +75,7 @@ static msg_t *msg = NULL;
 
 /********************** internal functions definition ************************/
 
-static void parser_init(void)
+static void c2_parser_init(void)
 {
   msg_pool_id = osPoolCreate(osPool(msg_pool));
 }
@@ -87,7 +87,7 @@ static void process_som(msg_t *msg)
     (void)osPoolFree(msg_pool_id, msg);
   }
 
-  msg = (msg_t*)osPoolAlloc(msg_pool_id);
+  msg = (msg_t*)osPoolCAlloc(msg_pool_id);
 }
 
 static void process_eom(msg_t *msg)
@@ -100,9 +100,9 @@ static void process_eom(msg_t *msg)
 
 static void process_msg(uint8_t data, msg_t *msg)
 {
-  static void *msg_ptr = NULL != msg ? &msg->id : NULL;
+  static uint8_t *msg_ptr = NULL != msg ? &msg->id : NULL;
 
-  if (NULL != msg_ptr && msg_ptr <= &msg->reserved_1)
+  if (NULL != msg_ptr && msg_ptr < &msg->eom)
   {
     if (msg_ptr >= &msg->c && msg_ptr < &msg->crc)
     {

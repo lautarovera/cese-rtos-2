@@ -56,9 +56,14 @@
 
 /********************** internal functions definition ************************/
 
-/********************** external functions definition ************************/
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  uint8_t data = 0u;
+  c1_driver_rx_handler(huart3, &data);
+  c2_parser_rx_handler(data);
+}
 
-/********************** end of file ******************************************/
+/********************** external functions definition ************************/
 
 void c1_driver_tx_byte(UART_HandleTypeDef uart_handler, const uint8_t *data)
 {
@@ -76,3 +81,5 @@ void c1_driver_rx_handler(UART_HandleTypeDef uart_handler, uint8_t *data)
 
   c1_driver_rx_byte(uart_handler, &data);
 }
+
+/********************** end of file ******************************************/
