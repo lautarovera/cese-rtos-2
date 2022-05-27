@@ -56,7 +56,7 @@ extern "C" {
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
-
+void c2_parser_init(void);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }

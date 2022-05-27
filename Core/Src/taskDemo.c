@@ -60,7 +60,7 @@
 /* Application includes. */
 #include "taskDemo.h"
 
-#include "c1_driver.h"
+#include "c2_parser.h"
 
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
 // ------ Private constants ----------------------------------------
@@ -94,13 +94,7 @@ void vTaskDemo(void const *argument)
 
   }
 }
-static void loop_back(void){
-  uint8_t tmp = 0;
 
-  tmp = c1_read_data();
-
-  c1_driver_tx((uint8_t*)tmp);
-}
 /* Task Function thread */
 void task_test(void const *argument)
 {
@@ -109,8 +103,8 @@ void task_test(void const *argument)
   char *pcTaskName;
   pcTaskName = (char*)argument;
 
-  char myStr[50] = {};
-  uint16_t counter = 0;
+ // char myStr[50] = {};
+ // uint16_t counter = 0;
 
   uint32_t xLastExecutionTime = osKernelSysTick();
   const uint32_t xBlockPeriod = 5000;
@@ -118,7 +112,7 @@ void task_test(void const *argument)
   vPrintString(pcTaskName);
 
 
-  c1_driver_init(&vPrintString, &loop_back);
+  c2_parser_init();
   /* As per most tasks, this task is implemented in an infinite loop. */
   for (;;)
   {
