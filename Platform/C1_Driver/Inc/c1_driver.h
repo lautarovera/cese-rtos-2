@@ -67,6 +67,7 @@ void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*));
  */
 void c1_driver_tx(uint8_t *data);
 
+uint8_t c1_read_data(void);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }

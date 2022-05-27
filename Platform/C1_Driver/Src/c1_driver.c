@@ -90,5 +90,10 @@ void c1_driver_tx(uint8_t *data){
   //CUIDADO ACA, QUIZAS HAY QUE HACER UN MEMCPY DE DATA? SE ESTA PASANDO EL PUNTERO
   HAL_UART_Transmit_IT(&huart3, data, 1u);
 }
+
+uint8_t c1_read_data(void)
+{
+  return rx_buffer[0];
+};
 /********************** end of file ******************************************/
 
