@@ -59,13 +59,13 @@ typedef struct
     uint8_t som;
     uint32_t id;
     uint8_t c;
-    uint8_t *data; //[MAX_PAYLOAD_SIZE];
+    uint8_t data[MAX_PAYLOAD_SIZE];
     uint16_t crc;
     uint8_t eom;
 } msg_t;
 
 /********************** internal functions declaration ***********************/
-static void c2_parser_rx_cb(void);
+//static void c2_parser_rx_cb(uint8_t data);
 static void c2_parser_tx_cb(void);
 static void process_som(msg_t *msg);
 static void process_eom(msg_t *msg);
@@ -74,8 +74,9 @@ static void process_eom(msg_t *msg);
 
 static osPoolDef (msg_pool, 10u, msg_t);
 static osPoolId  (msg_pool_id);
-//static msg_t *msg = NULL;
-
+static msg_t *msg = NULL;
+static msg_t msg_debug ;
+static uint8_t *msg_ptr;
 /********************** external data definition *****************************/
 
 /********************** internal functions definition ************************/
@@ -88,6 +89,7 @@ static void process_som(msg_t *msg)
   }
 
   msg = (msg_t*)osPoolCAlloc(msg_pool_id);
+
 }
 
 static void process_eom(msg_t *msg)
@@ -98,48 +100,50 @@ static void process_eom(msg_t *msg)
   }
 }
 
+
 static void process_msg(uint8_t data, msg_t *msg)
 {
- /* static uint8_t *msg_ptr = NULL != msg ? &msg->id : NULL;
 
-  if (NULL != msg_ptr && msg_ptr < &msg->eom)
-  {
-    if (msg_ptr >= &msg->c && msg_ptr < &msg->crc)
-    {
-      *msg_ptr++ = data;
-    }
-    else
-    {
-      if (data >= '0' && data <= '9' || data >= 'A' && data <= 'Z')
+ // if(*msg_ptr = NULL != msg ){ &msg->id}else{ NULL};
+
+  //if (NULL != msg_ptr && msg_ptr < &msg->eom)
+ // {
+ //   if (msg_ptr >= &msg->c && msg_ptr < &msg->crc)
+ //   {
+ //     *msg_ptr++ = data;
+ //   }
+ //   else
+ //   {
+ //     if ((data >= '0' && data <= '9') || (data >= 'A' && data <= 'Z'))
       {
         *msg_ptr++ = data;
+
       }
-      else
-      {
-        (void)osPoolFree(msg_pool_id, msg);
-      }
-    }
-  }*/
+ //     else
+ //     {
+ //       (void)osPoolFree(msg_pool_id, msg);
+ //     }
+ //   }
+ // }
 }
 
 static void c2_parser_tx_cb(void)
 {
 
 }
-
-static void c2_parser_rx_cb(void)
+// Se define como externa para debug, luego cambiar la visibilidad
+void c2_parser_rx_cb(uint8_t data)
 {
-  uint8_t data = c1_read_data();
-  static msg_t *msg = NULL;
 
   switch(data)
   {
     case SOM:
       process_som(msg);
-      //char_count = 0u;
+      *msg_ptr = (uint8_t*)&msg->id;
+      //msg_ptr = (uint8_t*)&msg_debug.id;
       break;
     case EOM:
-      //process_eom();
+      process_eom(msg);
       break;
     default:
       process_msg(data, msg);
@@ -150,7 +154,7 @@ static void c2_parser_rx_cb(void)
 //{
 void c2_parser_init(void)
 {
-  c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);    //TODO: revisar el tipo en las llamadas a las callback
+ // c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);    //TODO: revisar el tipo en las llamadas a las callback
   msg_pool_id = osPoolCreate(osPool(msg_pool));
 }
 

@@ -57,6 +57,8 @@ extern "C" {
 
 /********************** external functions declaration ***********************/
 void c2_parser_init(void);
+// Se define como externa para debug, luego cambiar la visibilidad
+void c2_parser_rx_cb(uint8_t data);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }

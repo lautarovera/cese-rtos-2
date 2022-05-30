@@ -64,7 +64,7 @@
 
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
 // ------ Private constants ----------------------------------------
-
+#define SIZE_TEST 10 //TODO: Solo debug
 // ------ Private variables ----------------------------------------
 
 // ------ Public functions prototypes ------------------------------
@@ -103,22 +103,26 @@ void task_test(void const *argument)
   char *pcTaskName;
   pcTaskName = (char*)argument;
 
- // char myStr[50] = {};
- // uint16_t counter = 0;
+ uint8_t myStr[SIZE_TEST] = {'(','1','2','3','4','5','6','7','8','9'};
+ uint16_t counter = 0;
 
   uint32_t xLastExecutionTime = osKernelSysTick();
-  const uint32_t xBlockPeriod = 5000;
+  const uint32_t xBlockPeriod = 100;
   /* Print out the name of this task. */
   vPrintString(pcTaskName);
 
 
-  c2_parser_init();
+  //c2_parser_init();
   /* As per most tasks, this task is implemented in an infinite loop. */
   for (;;)
   {
-    //counter++;
     //sprintf(myStr,"%u", counter);
     //c1_driver_tx((uint8_t*)myStr);
+
+    c2_parser_rx_cb(myStr[counter]);
+    counter++;
+
+    if(SIZE_TEST == counter){counter=1;}
     osDelayUntil( &xLastExecutionTime, xBlockPeriod );
   }
 }
