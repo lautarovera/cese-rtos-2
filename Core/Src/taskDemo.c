@@ -112,7 +112,7 @@ void task_test(void const *argument)
   vPrintString(pcTaskName);
 
 
-  //c2_parser_init();
+  c2_parser_init();
   /* As per most tasks, this task is implemented in an infinite loop. */
   for (;;)
   {

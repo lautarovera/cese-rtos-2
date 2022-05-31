@@ -64,34 +64,42 @@ typedef struct
     uint8_t eom;
 } msg_t;
 
-typedef enum {IDLE , ID_receive , DATA_receive} state_t;
+typedef enum {IDLE , ID_RECEIVE , DATA_RECEIVE} state_t;
 
 /********************** internal functions declaration ***********************/
-static void message_error(void);
-static void check_crc(void);
+static void message_error(msg_t *msg);
+static void check_crc(msg_t *msg);
 static msg_t *init_message(void);
 /********************** internal data definition *****************************/
 
+static osPoolDef (msg_pool, 10u, msg_t);
+static osPoolId  (msg_pool_id);
 /********************** external data definition *****************************/
 
 /********************** internal functions definition ************************/
 
 static msg_t *init_message(void)
 {
-  static msg_t msg_str;
-  //TODO: implementar alocación de memoria dinámica
-  msg_t *msg = &msg_str;
+  msg_t *msg = NULL;
+
+  msg = (msg_t*)osPoolCAlloc(msg_pool_id);
+
   return msg;
 }
 
-static void check_crc(void){}
+static void check_crc(msg_t *msg){
+  //TODO: chequear CRC(últimos dos bytes recibidos)
+}
 
-static void message_error(void){}
+static void message_error(msg_t *msg){
+  //TODO: liberar memoria dinámica
+  (void)osPoolFree(msg_pool_id, msg);
+}
 
 void c2_parser_rx_cb(uint8_t data)
 {
   static uint8_t *msg_ptr;
-
+  static msg_t *msg;
   static int count_id = 0, count_data = 0;
   static state_t state_reg = IDLE;
 
@@ -100,35 +108,47 @@ void c2_parser_rx_cb(uint8_t data)
     case IDLE:
       if (SOM == data)
       {
-        msg_t *msg = init_message();
+        msg = init_message();
+        if (NULL == msg){
+          // error memoria dinámica
+        }
         msg_ptr = (uint8_t*)msg;
         *msg_ptr++ = data;
         count_id = 0;
-        state_reg = ID_receive;
+        state_reg = ID_RECEIVE;
       }
       break;
-    case ID_receive:
-      if (SOM == data){
-        message_error();
+
+    case ID_RECEIVE:
+      if (SOM == data)
+      {
+        message_error(msg);
         state_reg = IDLE;
       }
-
-      *msg_ptr++ = data;
-      count_id++;
-      if(5 == count_id){
-        if('C'||'P' == data){           //Valid charter c
+      if (5 == count_id)
+      {
+        if ('C' == data || 'P' == data)
+        {           //Valid charter c
           count_data = 0;
-          state_reg = DATA_receive;
-        }else{
-          message_error();
+          state_reg = DATA_RECEIVE;
+        }
+        else
+        {
+          message_error(msg);
           state_reg = IDLE;
         }
       }
+      else
+      {
+        *msg_ptr++ = data;
+        count_id++;
+      }
       break;
-    case DATA_receive:
+
+    case DATA_RECEIVE:
       if (EOM == data)
       {
-        check_crc();
+        check_crc(msg);
       }
       else
       {
@@ -136,6 +156,9 @@ void c2_parser_rx_cb(uint8_t data)
         {
           *msg_ptr++ = data;
           count_data++;
+        }else{
+          message_error(msg);
+          state_reg = IDLE;
         }
       }
       break;
@@ -144,5 +167,10 @@ void c2_parser_rx_cb(uint8_t data)
   }
 }
 /********************** external functions definition ************************/
-
+void c2_parser_init(void)
+{
+  //TODO: Setear los callback de la capa C1
+  //c1_driver_init(tx_cb, rx_cb)
+  msg_pool_id = osPoolCreate(osPool(msg_pool));
+}
 /********************** end of file ******************************************/
