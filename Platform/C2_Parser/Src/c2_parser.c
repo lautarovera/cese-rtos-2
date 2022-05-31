@@ -1,5 +1,5 @@
 /**
- * Copyright (c) May 21, 2022 Lautaro Vera <lautarovera93@gmail.com>.
+ * Copyright (c) 31 may. 2022 Lautaro Vera <lautarovera93@gmail.com>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  *
  *
  * @file    : c2_parser.c
- * @date    : May 21, 2022
+ * @date    : 31 may. 2022
  * @author  : Lautaro Vera <lautarovera93@gmail.com>
  * @version : v1.0.0
  */
@@ -64,114 +64,85 @@ typedef struct
     uint8_t eom;
 } msg_t;
 
-/********************** internal functions declaration ***********************/
-//static void c2_parser_rx_cb(uint8_t data);
-static void c2_parser_tx_cb(void);
-static void process_som(msg_t *msg);
-static void process_eom(msg_t *msg);
+typedef enum {IDLE , ID_receive , DATA_receive} state_t;
 
+/********************** internal functions declaration ***********************/
+static void message_error(void);
+static void check_crc(void);
+static msg_t *init_message(void);
 /********************** internal data definition *****************************/
 
-static osPoolDef (msg_pool, 10u, msg_t);
-static osPoolId  (msg_pool_id);
-static msg_t *msg = NULL;
-static msg_t msg_debug ;
-static uint8_t *msg_ptr;
 /********************** external data definition *****************************/
 
 /********************** internal functions definition ************************/
 
-static void process_som(msg_t *msg)
+static msg_t *init_message(void)
 {
-  if (NULL != msg)
-  {
-    (void)osPoolFree(msg_pool_id, msg);
-  }
-
-  msg = (msg_t*)osPoolCAlloc(msg_pool_id);
-
+  static msg_t msg_str;
+  //TODO: implementar alocación de memoria dinámica
+  msg_t *msg = &msg_str;
+  return msg;
 }
 
-static void process_eom(msg_t *msg)
-{
-  if (NULL != msg)
-  {
-   // msg_ongoing = false;
-  }
-}
+static void check_crc(void){}
 
+static void message_error(void){}
 
-static void process_msg(uint8_t data, msg_t *msg)
-{
-
- // if(*msg_ptr = NULL != msg ){ &msg->id}else{ NULL};
-
-  //if (NULL != msg_ptr && msg_ptr < &msg->eom)
- // {
- //   if (msg_ptr >= &msg->c && msg_ptr < &msg->crc)
- //   {
- //     *msg_ptr++ = data;
- //   }
- //   else
- //   {
- //     if ((data >= '0' && data <= '9') || (data >= 'A' && data <= 'Z'))
-      {
-        *msg_ptr++ = data;
-
-      }
- //     else
- //     {
- //       (void)osPoolFree(msg_pool_id, msg);
- //     }
- //   }
- // }
-}
-
-static void c2_parser_tx_cb(void)
-{
-
-}
-// Se define como externa para debug, luego cambiar la visibilidad
 void c2_parser_rx_cb(uint8_t data)
 {
+  static uint8_t *msg_ptr;
 
-  switch(data)
+  static int count_id = 0, count_data = 0;
+  static state_t state_reg = IDLE;
+
+  switch (state_reg)
   {
-    case SOM:
-      process_som(msg);
-      *msg_ptr = (uint8_t*)&msg->id;
-      //msg_ptr = (uint8_t*)&msg_debug.id;
+    case IDLE:
+      if (SOM == data)
+      {
+        msg_t *msg = init_message();
+        msg_ptr = (uint8_t*)msg;
+        *msg_ptr++ = data;
+        count_id = 0;
+        state_reg = ID_receive;
+      }
       break;
-    case EOM:
-      process_eom(msg);
+    case ID_receive:
+      if (SOM == data){
+        message_error();
+        state_reg = IDLE;
+      }
+
+      *msg_ptr++ = data;
+      count_id++;
+      if(5 == count_id){
+        if('C'||'P' == data){           //Valid charter c
+          count_data = 0;
+          state_reg = DATA_receive;
+        }else{
+          message_error();
+          state_reg = IDLE;
+        }
+      }
+      break;
+    case DATA_receive:
+      if (EOM == data)
+      {
+        check_crc();
+      }
+      else
+      {
+        if ((data >= '0' && data <= '9') || (data >= 'A' && data <= 'Z'))
+        {
+          *msg_ptr++ = data;
+          count_data++;
+        }
+      }
       break;
     default:
-      process_msg(data, msg);
+      break;
   }
 }
 /********************** external functions definition ************************/
-//if (data >= '0' && data <= '9' || data >= 'A' && data <= 'Z')
-//{
-void c2_parser_init(void)
-{
- // c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);    //TODO: revisar el tipo en las llamadas a las callback
-  msg_pool_id = osPoolCreate(osPool(msg_pool));
-}
-
-void c2_parser_task(const void *argument)
-{
-  //parser_init();
-
-  for(;;)
-  {
-
-  }
-}
-
-
-void c2_parser_error_handler(void)
-{
-
-}
 
 /********************** end of file ******************************************/

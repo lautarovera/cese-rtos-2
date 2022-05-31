@@ -1,5 +1,5 @@
 /**
- * Copyright (c) May 21, 2022 Lautaro Vera <lautarovera93@gmail.com>.
+ * Copyright (c) 31 may. 2022 Lautaro Vera <lautarovera93@gmail.com>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @file    : c2_parser.h
- * @date    : May 21, 2022
+ * @date    : 31 may. 2022
  * @author  : Lautaro Vera <lautarovera93@gmail.com>
  * @version : v1.0.0
  */
 
-#ifndef C2_PARSER_H_
-#define C2_PARSER_H_
+#ifndef C2_PARSER_INC_C2_PARSER_H_
+#define C2_PARSER_INC_C2_PARSER_H_
 
 /********************** CPP guard ********************************************/
 #ifdef __cplusplus
@@ -57,13 +57,14 @@ extern "C" {
 
 /********************** external functions declaration ***********************/
 void c2_parser_init(void);
-// Se define como externa para debug, luego cambiar la visibilidad
+
+// TODO: Se define como externa para debug, luego cambiar la visibilidad
 void c2_parser_rx_cb(uint8_t data);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* C2_PARSER_H_ */
+#endif /* C2_PARSER_INC_C2_PARSER_H_ */
 /********************** end of file ******************************************/
 

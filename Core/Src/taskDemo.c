@@ -46,6 +46,7 @@
 
 // ------ Includes -------------------------------------------------
 /* Project includes. */
+#include <c2_parser.h>
 #include "main.h"
 #include "cmsis_os.h"
 
@@ -60,7 +61,6 @@
 /* Application includes. */
 #include "taskDemo.h"
 
-#include "c2_parser.h"
 
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
 // ------ Private constants ----------------------------------------
