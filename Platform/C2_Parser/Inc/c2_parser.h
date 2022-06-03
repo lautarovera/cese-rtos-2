@@ -57,6 +57,8 @@ extern "C" {
 
 /********************** external functions declaration ***********************/
 void c2_parser_init(void);
+void c2_read_message(void);
+bool c2_new_message(void);
 
 // TODO: Se define como externa para debug, luego cambiar la visibilidad
 void c2_parser_rx_cb(uint8_t data);
