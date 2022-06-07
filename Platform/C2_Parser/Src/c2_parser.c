@@ -43,6 +43,7 @@
 #include <stdbool.h>
 #include "cmsis_os.h"
 #include "c1_driver.h"
+#include "crc8.h"
 
 /********************** macros and definitions *******************************/
 
@@ -57,13 +58,14 @@
 
 typedef struct
 {
-    uint8_t som;
+  //  uint8_t som;
     uint32_t id;
     uint8_t c;
     uint8_t data[MAX_PAYLOAD_SIZE];
     uint16_t crc;
-    uint8_t eom;
-} msg_t;
+    uint16_t data_length;
+  //  uint8_t eom;
+}__attribute__((packed)) msg_t;
 
 typedef enum {IDLE , ID_RECEIVE , DATA_RECEIVE} state_t;
 
@@ -74,6 +76,7 @@ static bool check_crc(msg_t *msg);
 static bool validate_ID(uint32_t id);
 static msg_t *init_message(void);
 
+static msg_t msg_global_; //TODO: borrar al incorporar el uso de memoria
 /********************** internal data definition *****************************/
 
 static osPoolDef (msg_pool, 10u, msg_t);
@@ -89,13 +92,19 @@ static msg_t *init_message(void)
 {
   msg_t *msg = NULL;
 
-  msg = (msg_t*)osPoolCAlloc(msg_pool_id);
+  msg = &msg_global_;
+ // msg = (msg_t*)osPoolCAlloc(msg_pool_id);
 
   return msg;
 }
 
 static bool check_crc(msg_t *msg){
-  //TODO: chequear CRC(últimos dos bytes recibidos)
+  uint8_t value_crc = 0;
+
+  // Se restan dos posiciones del campo data_length y dos del CRC
+  value_crc = crc8_calc( 0x00 , (uint8_t*)msg , msg->data_length-4 );
+
+  //TODO: comparar el resultado con los últimos dos bytes recibidos en data
   return true;
 }
 
@@ -127,7 +136,7 @@ void c2_parser_rx_cb(uint8_t data)
 {
   static uint8_t *msg_ptr;
   static msg_t *msg;
-  static int count_id = 0, count_data = 0;
+  static int count_id = 0;
   static state_t state_reg = IDLE;
   static bool time_out = false;
 
@@ -142,7 +151,6 @@ void c2_parser_rx_cb(uint8_t data)
           // error memoria dinámica
         }
         msg_ptr = (uint8_t*)msg;
-        *msg_ptr++ = data;
         count_id = 0;
         state_reg = ID_RECEIVE;
       }
@@ -162,6 +170,7 @@ void c2_parser_rx_cb(uint8_t data)
         {
           if (validate_ID(msg->id))
           {
+            msg->data_length = ID_SIZE;
             state_reg = DATA_RECEIVE;
           }
           else
@@ -174,15 +183,13 @@ void c2_parser_rx_cb(uint8_t data)
       break;
 
     case DATA_RECEIVE:
-      if (MAX_MSG_SIZE == count_data || time_out)
+      if (MAX_MSG_SIZE == msg->data_length || time_out)
       {
         message_error(msg);
         state_reg = IDLE;
       }
       else
       {
-        *msg_ptr++ = data;
-        count_data++;
         if (EOM == data)
         {
           if(true == check_crc(msg))
@@ -191,6 +198,8 @@ void c2_parser_rx_cb(uint8_t data)
           }
           state_reg = IDLE;
         }
+        *msg_ptr++ = data;
+        msg->data_length++;
       }
       break;
     default:
@@ -202,6 +211,7 @@ void c2_parser_init(void)
 {
   //TODO: Setear los callback de la capa C1
   //c1_driver_init(tx_cb, rx_cb)
+  crc8_init();
   msg_pool_id = osPoolCreate(osPool(msg_pool));
 }
 

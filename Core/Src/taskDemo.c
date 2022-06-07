@@ -103,7 +103,7 @@ void task_test(void const *argument)
   char *pcTaskName;
   pcTaskName = (char*)argument;
 
- uint8_t myStr[SIZE_TEST] = {'(','1','2','3','4','5','6','7','8','9'};
+ uint8_t myStr[SIZE_TEST] = {'(','1','2','3','4','C','6','7','8',')'};
  uint16_t counter = 0;
 
   uint32_t xLastExecutionTime = osKernelSysTick();
