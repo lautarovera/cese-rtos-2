@@ -37,190 +37,177 @@
  */
 
 /********************** inclusions *******************************************/
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
 #include "cmsis_os.h"
 #include "c1_driver.h"
 #include "crc8.h"
 
 /********************** macros and definitions *******************************/
-
 #define SOM                     '('
 #define EOM                     ')'
 #define MAX_MSG_SIZE            200u
-#define METADA_SIZE             9u
-#define MAX_PAYLOAD_SIZE        (MAX_MSG_SIZE - METADA_SIZE)
 #define ID_SIZE                 4u
+#define CRC_SIZE                2u
 
 /********************** internal data declaration ****************************/
-
-typedef struct
+typedef enum
 {
-  //  uint8_t som;
-    uint32_t id;
-    uint8_t c;
-    uint8_t data[MAX_PAYLOAD_SIZE];
-    uint16_t crc;
-    uint16_t data_length;
-  //  uint8_t eom;
-}__attribute__((packed)) msg_t;
-
-typedef enum {IDLE , ID_RECEIVE , DATA_RECEIVE} state_t;
+  IDLE, ID_RECEIVE, DATA_RECEIVE
+} state_t;
 
 /********************** internal functions declaration ***********************/
+static void timeout_cb(void const *arg);
+static void message_error(uint8_t *msg);
+static bool check_crc(uint8_t *msg, uint16_t len);
 
-static void message_error(msg_t *msg);
-static bool check_crc(msg_t *msg);
-static bool validate_ID(uint32_t id);
-static msg_t *init_message(void);
-
-static msg_t msg_global_; //TODO: borrar al incorporar el uso de memoria
 /********************** internal data definition *****************************/
-
-static osPoolDef (msg_pool, 10u, msg_t);
-static osPoolId  (msg_pool_id);
+static osTimerDef(timeout, timeout_cb);
+static osTimerId timeout_id;
+static osPoolDef(pdu_pool, 1u, MAX_MSG_SIZE);
+static osPoolId pdu_pool_id;
 
 /********************** external data definition *****************************/
-
 static bool new_message = false;
+static bool timeout = false;
 
 /********************** internal functions definition ************************/
-
-static msg_t *init_message(void)
+static void timeout_cb(void const *arg)
 {
-  msg_t *msg = NULL;
-
-  msg = &msg_global_;
- // msg = (msg_t*)osPoolCAlloc(msg_pool_id);
-
-  return msg;
+  timeout = true;
 }
 
-static bool check_crc(msg_t *msg){
-  uint8_t value_crc = 0;
-
-  // Se restan dos posiciones del campo data_length y dos del CRC
-  value_crc = crc8_calc( 0x00 , (uint8_t*)msg , msg->data_length-4 );
-
-  //TODO: comparar el resultado con los últimos dos bytes recibidos en data
-  return true;
-}
-
-static void message_error(msg_t *msg){
-  //TODO: liberar memoria dinámica
-  (void)osPoolFree(msg_pool_id, msg);
-}
-
-static bool validate_ID(uint32_t id)
+static void message_error(uint8_t *msg)
 {
-  uint8_t *tmp = (uint8_t*)&id;
-  int i = 0;
-
-  for (i = 0; i < ID_SIZE; i++)
+  if (msg != NULL)
   {
-    if ((*tmp >= '0' && *tmp <= '9') || (*tmp >= 'A' && *tmp <= 'F'))
-    {
-      tmp++;
-    }
-    else
-    {
-      return false;
-    }
+    (void)osPoolFree(pdu_pool_id, msg);
+    msg = NULL;
   }
-  return true;
 }
 
+static bool check_crc(uint8_t *msg, uint16_t len)
+{
+  uint8_t target_crc = (uint8_t)strtol((const char*)&msg[len - CRC_SIZE], NULL, 16);
+  uint8_t value_crc = crc8_calc(0u, (uint8_t*)msg, len - CRC_SIZE);
+
+  return value_crc == target_crc ? true : false;
+}
+
+/********************** external functions definition ************************/
 void c2_parser_rx_cb(uint8_t data)
 {
-  static uint8_t *msg_ptr;
-  static msg_t *msg;
-  static int count_id = 0;
+  static uint16_t msg_len = 0;
+  static uint8_t *msg = NULL;
+  static uint8_t *msg_ptr = NULL;
   static state_t state_reg = IDLE;
-  static bool time_out = false;
 
   switch (state_reg)
   {
     case IDLE:
       if (SOM == data)
       {
-        msg = init_message();
+        msg = (uint8_t*)osPoolCAlloc(pdu_pool_id);
         if (NULL == msg)
         {
-          // error memoria dinámica
+          message_error(msg);
+          state_reg = IDLE;
         }
-        msg_ptr = (uint8_t*)msg;
-        count_id = 0;
+        msg_ptr = msg;
+        msg_len = 0;
+
+        osTimerStart(timeout_id, 4);
+
         state_reg = ID_RECEIVE;
       }
       break;
 
     case ID_RECEIVE:
-      if (SOM == data || time_out)
+      if (SOM == data || timeout)
       {
+        timeout = false;
         message_error(msg);
         state_reg = IDLE;
       }
+      else if (osTimerStop(timeout_id) != osOK)
+      {
+        if (isxdigit(data) != 0u && islower(data) == 0u)
+        {
+          *msg_ptr++ = data;
+          osTimerStart(timeout_id, 4);
+
+          state_reg = (ID_SIZE == ++msg_len) ? DATA_RECEIVE : ID_RECEIVE;
+        }
+        else
+        {
+          message_error(msg);
+          state_reg = IDLE;
+        }
+      }
       else
       {
-        *msg_ptr++ = data;
-        count_id++;
-        if (ID_SIZE == count_id)
-        {
-          if (validate_ID(msg->id))
-          {
-            msg->data_length = ID_SIZE;
-            state_reg = DATA_RECEIVE;
-          }
-          else
-          {
-            message_error(msg);
-            state_reg = IDLE;
-          }
-        }
+        message_error(msg);
+        state_reg = IDLE;
       }
       break;
 
     case DATA_RECEIVE:
-      if (MAX_MSG_SIZE == msg->data_length || time_out)
+      if (SOM == data || MAX_MSG_SIZE < msg_len || timeout)
       {
+        timeout = false;
         message_error(msg);
         state_reg = IDLE;
       }
-      else
+      else if (osTimerStop(timeout_id) != osOK)
       {
         if (EOM == data)
         {
-          if(true == check_crc(msg))
-          {
-            new_message = true;
-          }
+          new_message = check_crc(msg, msg_len);
           state_reg = IDLE;
         }
+        osTimerStart(timeout_id, 4);
         *msg_ptr++ = data;
-        msg->data_length++;
+        msg_len++;
+      }
+      else
+      {
+        message_error(msg);
+        state_reg = IDLE;
       }
       break;
     default:
       break;
   }
 }
-/********************** external functions definition ************************/
+
 void c2_parser_init(void)
 {
   //TODO: Setear los callback de la capa C1
   //c1_driver_init(tx_cb, rx_cb)
-  crc8_init();
-  msg_pool_id = osPoolCreate(osPool(msg_pool));
+//  crc8_init();
+
+  timeout_id = osTimerCreate(osTimer(timeout), osTimerOnce, NULL);
+
+  pdu_pool_id = osPoolCreate(osPool(pdu_pool));
 }
 
-void c2_read_message(void)
+uint8_t *c2_create_sdu(const uint8_t *msg)
 {
+  uint8_t *sdu = NULL;
+  uint16_t len = strlen((const char *)msg);
 
+  sdu = (uint8_t *)malloc(len - ID_SIZE - CRC_SIZE);
+
+  memcpy(sdu, &msg[ID_SIZE], strlen((const char *)sdu));
+
+  return sdu;
 }
 
-bool c2_new_message(void)
+bool c2_is_new_message(void)
 {
   return new_message;
 }

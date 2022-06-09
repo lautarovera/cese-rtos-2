@@ -25,7 +25,8 @@
 /* Standard includes. */
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
+#include "c2_parser.h"
 /* Demo includes. */
 #include "supportingFunctions.h"
 
@@ -38,6 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -94,7 +96,7 @@ extern volatile unsigned long ulHighFrequencyTimerTicks;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  const char *pcTextForMain = "freertos_book_Example1_6 is running: Print run time statistics and task list\r\n\n";
+//  const char *pcTextForMain = "freertos_book_Example1_6 is running: Print run time statistics and task list\r\n\n";
 
   /* USER CODE END 1 */
 
@@ -119,7 +121,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  vPrintString(pcTextForMain);
+//  vPrintString(pcTextForMain);
 
 #if(TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
   /* Start timer */
@@ -200,7 +202,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

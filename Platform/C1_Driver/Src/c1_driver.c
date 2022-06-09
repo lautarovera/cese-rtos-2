@@ -69,7 +69,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   (*rx_cb_func)(rx_buffer);
 
-  UART_Start_Receive_IT(huart, rx_buffer, UART_RX_IT_COUNT);
+  HAL_UART_Receive_IT(huart, rx_buffer, UART_RX_IT_COUNT);
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
@@ -83,7 +83,7 @@ void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
   tx_cb_func = tx_cb;
   rx_cb_func = rx_cb;
 
-  UART_Start_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
+  HAL_UART_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
 }
 
 void c1_driver_tx(uint8_t *data){

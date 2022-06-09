@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 uint8_t crc8_init(void);
-uint8_t crc8_calc(uint8_t val, void *buf, int cnt);
+uint8_t crc8_calc(uint8_t val, void *buf, uint16_t len);
 
 #ifdef __cplusplus
 }

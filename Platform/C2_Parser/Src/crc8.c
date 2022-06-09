@@ -56,12 +56,12 @@ uint8_t crc8_init(void)
   return 0xff;
 }
 
-uint8_t crc8_calc(uint8_t val, void *buf, int cnt)
+uint8_t crc8_calc(uint8_t val, void *buf, uint16_t len)
 {
-  int i;
+  uint16_t i;
   uint8_t *p = buf;
 
-  for (i = 0; i < cnt; i++)
+  for (i = 0; i < len; i++)
   {
     val ^= p[i];
     val = (val << 4) ^ crc8_small_table[val >> 4];
