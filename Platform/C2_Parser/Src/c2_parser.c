@@ -53,6 +53,7 @@
 #define MAX_MSG_SIZE            200u
 #define ID_SIZE                 4u
 #define CRC_SIZE                2u
+#define TIMEOUT_MS              4u       //TODO: ajustar al valor de 4
 
 /********************** internal data declaration ****************************/
 typedef enum
@@ -120,7 +121,7 @@ void c2_parser_rx_cb(uint8_t data)
         msg_ptr = msg;
         msg_len = 0;
 
-        osTimerStart(timeout_id, 4);
+        osTimerStart(timeout_id, TIMEOUT_MS);
 
         state_reg = ID_RECEIVE;
       }
@@ -133,12 +134,12 @@ void c2_parser_rx_cb(uint8_t data)
         message_error(msg);
         state_reg = IDLE;
       }
-      else if (osTimerStop(timeout_id) != osOK)
+      else if (osTimerStop(timeout_id) == osOK)
       {
         if (isxdigit(data) != 0u && islower(data) == 0u)
         {
           *msg_ptr++ = data;
-          osTimerStart(timeout_id, 4);
+          osTimerStart(timeout_id, TIMEOUT_MS);
 
           state_reg = (ID_SIZE == ++msg_len) ? DATA_RECEIVE : ID_RECEIVE;
         }
@@ -162,14 +163,18 @@ void c2_parser_rx_cb(uint8_t data)
         message_error(msg);
         state_reg = IDLE;
       }
-      else if (osTimerStop(timeout_id) != osOK)
+      else if (osTimerStop(timeout_id) == osOK)
       {
         if (EOM == data)
         {
           new_message = check_crc(msg, msg_len);
+          if(!new_message)
+          {
+            message_error(msg);
+          }
           state_reg = IDLE;
         }
-        osTimerStart(timeout_id, 4);
+        osTimerStart(timeout_id, TIMEOUT_MS);
         *msg_ptr++ = data;
         msg_len++;
       }
@@ -191,6 +196,7 @@ void c2_parser_init(void)
 //  crc8_init();
 
   timeout_id = osTimerCreate(osTimer(timeout), osTimerOnce, NULL);
+  if(timeout_id == NULL)
 
   pdu_pool_id = osPoolCreate(osPool(pdu_pool));
 }

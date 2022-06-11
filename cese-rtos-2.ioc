@@ -1,13 +1,14 @@
 #MicroXplorer Configuration settings - do not modify
 FREERTOS.FootprintOK=true
 FREERTOS.INCLUDE_vTaskDelayUntil=1
-FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,MEMORY_ALLOCATION,FootprintOK,INCLUDE_vTaskDelayUntil,configGENERATE_RUN_TIME_STATS,configUSE_TRACE_FACILITY,configUSE_STATS_FORMATTING_FUNCTIONS,configCHECK_FOR_STACK_OVERFLOW
+FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,MEMORY_ALLOCATION,FootprintOK,INCLUDE_vTaskDelayUntil,configGENERATE_RUN_TIME_STATS,configUSE_TRACE_FACILITY,configUSE_STATS_FORMATTING_FUNCTIONS,configCHECK_FOR_STACK_OVERFLOW,configUSE_TIMERS
 FREERTOS.MEMORY_ALLOCATION=0
-FREERTOS.Tasks01=TaskStats,1,160,vTaskStats_,Default,(void*)pcTextForTaskStats,Dynamic,NULL,NULL;TaskDemo1,0,128,vTaskDemo_,Default,(void*)pcTextForTaskDemo1,Dynamic,NULL,NULL;TaskDemo2,0,128,vTaskDemo_,Default,(void*)pcTextForTaskDemo2,Dynamic,NULL,NULL
+FREERTOS.Tasks01=TaskStats,1,160,vTaskStats_,Default,(void*)pcTextForTaskStats,Dynamic,NULL,NULL;TaskDemo1,0,160,vTaskDemo_,Default,(void*)pcTextForTaskDemo1,Dynamic,NULL,NULL;TaskDemo2,0,160,vTaskDemo_,Default,(void*)pcTextForTaskDemo2,Dynamic,NULL,NULL
 FREERTOS.configCHECK_FOR_STACK_OVERFLOW=1
 FREERTOS.configGENERATE_RUN_TIME_STATS=1
 FREERTOS.configUSE_NEWLIB_REENTRANT=1
 FREERTOS.configUSE_STATS_FORMATTING_FUNCTIONS=1
+FREERTOS.configUSE_TIMERS=1
 FREERTOS.configUSE_TRACE_FACILITY=1
 File.Version=6
 GPIO.groupedBy=Group By Peripherals

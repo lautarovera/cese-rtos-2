@@ -61,10 +61,38 @@
 /* Application includes. */
 #include "taskDemo.h"
 
+#define DELAY_MS 2
 
 #if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
 // ------ Private constants ----------------------------------------
-#define SIZE_TEST 10 //TODO: Solo debug
+
+#define TEST_X ( 0 )
+
+#if( TEST_X == 0 )
+// Paquete correcto
+#define SIZE_PACKET  13
+static const char *packet_test = "(2546PHOLA5F)";
+/* Funciona bien
+ new_message = true */
+#endif
+
+#if( TEST_X == 1 )
+// Paquete con CRC erróneo
+#define SIZE_PACKET  13
+static const char *packet_test = "(2546PHOLA48)";
+/* Detecta CRC erróneo
+ new_message = false */
+#endif
+
+#if( TEST_X == 2 )
+// Paquete incompleto sin EOM
+#define SIZE_PACKET  3
+static const char *packet_test = "(52";
+/* Termina por Timeout */
+
+#endif
+
+
 // ------ Private variables ----------------------------------------
 
 // ------ Public functions prototypes ------------------------------
@@ -85,47 +113,41 @@ void vTaskDemo(void const *argument)
 
   /* Print out the name of this task. */
   vPrintString(pcTaskName);
+  uint8_t *tmp = NULL ,i=0 ;
 
-
-
-  /* As per most tasks, this task is implemented in an infinite loop. */
-  for (;;)
-  {
-
-  }
-}
-
-/* Task Function thread */
-void task_test(void const *argument)
-{
-  /* The string to print out is passed in via the parameter.  Cast this to a
-   character pointer. */
-  char *pcTaskName;
-  pcTaskName = (char*)argument;
-
- uint8_t myStr[SIZE_TEST] = {'(','1','2','3','4','C','6','7','8',')'};
- uint16_t counter = 0;
-
-  uint32_t xLastExecutionTime = osKernelSysTick();
-  const uint32_t xBlockPeriod = 100;
-  /* Print out the name of this task. */
-  vPrintString(pcTaskName);
-
+  tmp = (uint8_t*)packet_test;
+ // uint32_t xLastExecutionTime = osKernelSysTick();
+ // const uint32_t xBlockPeriod = 100;
 
   c2_parser_init();
+
   /* As per most tasks, this task is implemented in an infinite loop. */
-  for (;;)
+  for (i=0 ; i < SIZE_PACKET ; i++)
   {
-    //sprintf(myStr,"%u", counter);
-    //c1_driver_tx((uint8_t*)myStr);
 
-    c2_parser_rx_cb(myStr[counter]);
-    counter++;
+    c2_parser_rx_cb(*tmp++);
 
-    if(SIZE_TEST == counter){counter=1;}
-    osDelayUntil( &xLastExecutionTime, xBlockPeriod );
+ /*   if(i==6){
+      osDelay(DELAY_MS);
+      osDelay(DELAY_MS);
+    }
+    */
+    osDelay(DELAY_MS);
   }
+  osDelay(4*DELAY_MS);
+
+  if(c2_is_new_message())
+  {
+
+    vPrintString("Mensaje correcto \n");
+  }else{
+    vPrintString("Error detectado \n");
+  }
+
+  while(1){} // Fin del programa
+
 }
+
 #endif
 
 /*------------------------------------------------------------------*-
