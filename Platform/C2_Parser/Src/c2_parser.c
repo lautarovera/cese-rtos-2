@@ -43,8 +43,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-#include "cmsis_os.h"
-#include "c1_driver.h"
+#include "cmsis_os2.h"
+//#include "c1_driver.h"
+#include "c2_parser.h"
 #include "crc8.h"
 
 /********************** macros and definitions *******************************/
@@ -53,7 +54,7 @@
 #define MAX_MSG_SIZE            200u
 #define ID_SIZE                 4u
 #define CRC_SIZE                2u
-#define TIMEOUT_MS              4u       //TODO: ajustar al valor de 4
+#define TIMEOUT_MS              4u
 
 /********************** internal data declaration ****************************/
 typedef enum
@@ -62,31 +63,37 @@ typedef enum
 } state_t;
 
 /********************** internal functions declaration ***********************/
-static void timeout_cb(void const *arg);
+//static void timeout_cb(void const *arg);
 static void message_error(uint8_t *msg);
 static bool check_crc(uint8_t *msg, uint16_t len);
 
 /********************** internal data definition *****************************/
+/*//TODO: Cambiar ACA
 static osTimerDef(timeout, timeout_cb);
 static osTimerId timeout_id;
 static osPoolDef(pdu_pool, 1u, MAX_MSG_SIZE);
 static osPoolId pdu_pool_id;
-
+*/
+osMemoryPoolId_t pdu_pool_id;
+extern osTimerId_t timeoutHandle;
+#define timeout_id timeoutHandle
 /********************** external data definition *****************************/
 static bool new_message = false;
 static bool timeout = false;
 
 /********************** internal functions definition ************************/
-static void timeout_cb(void const *arg)
+void timeout_cb(void const *arg)
 {
   timeout = true;
+  c2_parser_rx_cb(0x00);        //Se actualiza la ME con un código de error y timeot=true
 }
 
 static void message_error(uint8_t *msg)
 {
   if (msg != NULL)
   {
-    (void)osPoolFree(pdu_pool_id, msg);
+    //TODO: Cambio CMSIS_V2 ACA(void)osPoolFree(pdu_pool_id, msg);
+    osMemoryPoolFree(pdu_pool_id, msg);
     msg = NULL;
   }
 }
@@ -112,7 +119,8 @@ void c2_parser_rx_cb(uint8_t data)
     case IDLE:
       if (SOM == data)
       {
-        msg = (uint8_t*)osPoolCAlloc(pdu_pool_id);
+        //TODO: Cambio CMSIS_V2 msg = (uint8_t*)osPoolCAlloc(pdu_pool_id);
+        msg = osMemoryPoolAlloc(pdu_pool_id, 0);
         if (NULL == msg)
         {
           message_error(msg);
@@ -122,7 +130,6 @@ void c2_parser_rx_cb(uint8_t data)
         msg_len = 0;
 
         osTimerStart(timeout_id, TIMEOUT_MS);
-
         state_reg = ID_RECEIVE;
       }
       break;
@@ -171,12 +178,15 @@ void c2_parser_rx_cb(uint8_t data)
           if(!new_message)
           {
             message_error(msg);
+          }else{
+            c2_create_sdu(msg);
           }
           state_reg = IDLE;
+        }else{
+          osTimerStart(timeout_id, TIMEOUT_MS);
+          *msg_ptr++ = data;
+          msg_len++;
         }
-        osTimerStart(timeout_id, TIMEOUT_MS);
-        *msg_ptr++ = data;
-        msg_len++;
       }
       else
       {
@@ -195,13 +205,16 @@ void c2_parser_init(void)
   //c1_driver_init(tx_cb, rx_cb)
 //  crc8_init();
 
+ /* TODO: Cambio, el time se crea en el main, podria hacerse acá tambien
   timeout_id = osTimerCreate(osTimer(timeout), osTimerOnce, NULL);
   if(timeout_id == NULL)
 
-  pdu_pool_id = osPoolCreate(osPool(pdu_pool));
+  //TODO: Cambio CMSIS_V2, pdu_pool_id = osPoolCreate(osPool(pdu_pool));*/
+
+  pdu_pool_id = osMemoryPoolNew(10, MAX_MSG_SIZE, NULL);
 }
 
-uint8_t *c2_create_sdu(const uint8_t *msg)
+uint8_t *c2_create_sdu(uint8_t *msg)
 {
   uint8_t *sdu = NULL;
   uint16_t len = strlen((const char *)msg);
@@ -210,11 +223,17 @@ uint8_t *c2_create_sdu(const uint8_t *msg)
 
   memcpy(sdu, &msg[ID_SIZE], strlen((const char *)sdu));
 
+  osMemoryPoolFree(pdu_pool_id, msg);
   return sdu;
 }
 
 bool c2_is_new_message(void)
 {
   return new_message;
+}
+
+void c2_read_message(void)
+{
+  new_message = false;
 }
 /********************** end of file ******************************************/

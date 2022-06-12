@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "cmsis_os2.h"
 
 /********************** macros and definitions *******************************/
 

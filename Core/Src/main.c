@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2022 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2022 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -22,13 +22,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-/* Standard includes. */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "c2_parser.h"
-/* Demo includes. */
-#include "supportingFunctions.h"
 
 /* USER CODE END Includes */
 
@@ -39,29 +32,35 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-/* Define the strings that will be passed in as the task parameters.  These are
- defined const and off the stack to ensure they remain valid when the tasks are
- executing. */
-const char *pcTextForTaskStats = "Task Stats  is running\r\n";
-const char *pcTextForTaskDemo1 = "Task Demo 1 is running\r\n";
-const char *pcTextForTaskDemo2 = "Task Demo 2 is running\r\n";
-const char *pcTextForTaskTest =  "Task Test is running\r\n";
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- TIM_HandleTypeDef htim2;
+ UART_HandleTypeDef huart3;
 
-UART_HandleTypeDef huart3;
-
-osThreadId TaskStatsHandle;
-osThreadId TaskDemo1Handle;
-osThreadId TaskDemo2Handle;
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for TaskTest */
+osThreadId_t TaskTestHandle;
+const osThreadAttr_t TaskTest_attributes = {
+  .name = "TaskTest",
+  .stack_size = 160 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for timeout */
+osTimerId_t timeoutHandle;
+const osTimerAttr_t timeout_attributes = {
+  .name = "timeout"
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -70,17 +69,12 @@ osThreadId TaskDemo2Handle;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_TIM2_Init(void);
-void vTaskStats_(void const * argument);
-void vTaskDemo_(void const * argument);
+void StartDefaultTask(void *argument);
+extern void task_test(void *argument);
+extern void timeout_cb(void *argument);
 
 /* USER CODE BEGIN PFP */
-#if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
-extern void vTaskStats(void const *argument);
-extern void vTaskDemo(void const *argument);
-extern void task_test(void const *argument);
-extern volatile unsigned long ulHighFrequencyTimerTicks;
-#endif
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -95,7 +89,6 @@ extern volatile unsigned long ulHighFrequencyTimerTicks;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-//  const char *pcTextForMain = "freertos_book_Example1_6 is running: Print run time statistics and task list\r\n\n";
 
   /* USER CODE END 1 */
 
@@ -118,44 +111,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART3_UART_Init();
-  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-//  vPrintString(pcTextForMain);
-
-#if(TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
-  /* Start timer */
-  HAL_TIM_Base_Start_IT(&htim2);
-
-  /* Create the thread(s) */
-  /* definition and creation of TaskStats */
-  //osThreadDef(TaskStats, vTaskStats, osPriorityAboveNormal, 0, 128 + 32);
-  //TaskStatsHandle = osThreadCreate(osThread(TaskStats), (void*)pcTextForTaskStats);
-
-  /* Check the task was created successfully */
-  //configASSERT(TaskStatsHandle != NULL);
-
-  /* definition and creation of DemoTask1 */
-  osThreadDef(TaskDemo1, vTaskDemo, osPriorityNormal, 0, 160);
-  TaskDemo1Handle = osThreadCreate(osThread(TaskDemo1), (void*)pcTextForTaskDemo1);
-
-  /* Check the task was created successfully */
-  configASSERT(TaskDemo1Handle != NULL);
-
-  /* definition and creation of DemoTask2 */
-  //osThreadDef(TaskDemo2, vTaskDemo, osPriorityNormal, 0, 128);
-  //TaskDemo2Handle = osThreadCreate(osThread(TaskDemo2), (void*)pcTextForTaskDemo2);
-
-  /* Check the task was created successfully */
-  //configASSERT(TaskDemo2Handle != NULL);
-
-  /* definition and creation of test_task */
-  //osThreadDef(task_test, task_test, osPriorityNormal, 0, 128);
-  //TaskTestHandle = osThreadCreate(osThread(task_test), (void*)pcTextForTaskTest);
-  //configASSERT(TaskTestHandle != NULL);
-
-#endif
 
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -165,32 +126,33 @@ int main(void)
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* creation of timeout */
+  timeoutHandle = osTimerNew(timeout_cb, osTimerOnce, NULL, &timeout_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  //osTimerStart(testHandle, 100);
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-#if( TASKS_SCOPE == TASKS_INSIDE_MAIN)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of TaskStats */
-  osThreadDef(TaskStats, vTaskStats_, osPriorityAboveNormal, 0, 160);
-  TaskStatsHandle = osThreadCreate(osThread(TaskStats), (void*)pcTextForTaskStats);
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* definition and creation of TaskDemo1 */
-  osThreadDef(TaskDemo1, vTaskDemo_, osPriorityNormal, 0, 160);
-  TaskDemo1Handle = osThreadCreate(osThread(TaskDemo1), (void*)pcTextForTaskDemo1);
-
-  /* definition and creation of TaskDemo2 */
-  osThreadDef(TaskDemo2, vTaskDemo_, osPriorityNormal, 0, 160);
-  TaskDemo2Handle = osThreadCreate(osThread(TaskDemo2), (void*)pcTextForTaskDemo2);
+  /* creation of TaskTest */
+  TaskTestHandle = osThreadNew(task_test, NULL, &TaskTest_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-#endif
   /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
   osKernelStart();
@@ -253,51 +215,6 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 2-1;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 42-1;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
-
-}
-
-/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
@@ -325,7 +242,7 @@ static void MX_USART3_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART3_Init 2 */
-  __HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
+
   /* USER CODE END USART3_Init 2 */
 
 }
@@ -344,10 +261,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(USB_PowerSwitchOn_GPIO_Port, USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : USER_Btn_Pin */
   GPIO_InitStruct.Pin = USER_Btn_Pin;
@@ -362,62 +283,41 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : USB_PowerSwitchOn_Pin */
+  GPIO_InitStruct.Pin = USB_PowerSwitchOn_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(USB_PowerSwitchOn_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USB_OverCurrent_Pin */
+  GPIO_InitStruct.Pin = USB_OverCurrent_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(USB_OverCurrent_GPIO_Port, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_vTaskStats_ */
+/* USER CODE BEGIN Header_StartDefaultTask */
 /**
- * @brief  Function implementing the TaskStats thread.
- * @param  argument: Not used
- * @retval None
- */
-/* USER CODE END Header_vTaskStats_ */
-void vTaskStats_(void const * argument)
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  /* The string to print out is passed in via the parameter.  Cast this to a
-   character pointer. */
-  char *pcTaskName;
-  pcTaskName = (char*)argument;
-
-  /* Print out the name of this task. */
-  vPrintString(pcTaskName);
-
   /* Infinite loop */
-  for (;;)
+  for(;;)
   {
     osDelay(1);
   }
   /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_vTaskDemo_ */
-/**
- * @brief Function implementing the TaskDemo1 thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_vTaskDemo_ */
-void vTaskDemo_(void const * argument)
-{
-  /* USER CODE BEGIN vTaskDemo_ */
-  /* The string to print out is passed in via the parameter.  Cast this to a
-   character pointer. */
-  char *pcTaskName;
-  pcTaskName = (char*)argument;
-
-  /* Print out the name of this task. */
-  vPrintString(pcTaskName);
-
-  /* Infinite loop */
-  for (;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END vTaskDemo_ */
 }
 
 /**
@@ -431,12 +331,6 @@ void vTaskDemo_(void const * argument)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-#if( TASKS_SCOPE == TASKS_OUTSIDE_MAIN)
-  if (htim->Instance == TIM2)
-  {
-    ulHighFrequencyTimerTicks++;
-  }
-#endif
 
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM7) {

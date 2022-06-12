@@ -1,5 +1,5 @@
-/**
- * Copyright (c) May 18, 2022 Lautaro Vera <lautarovera93@gmail.com>.
+/*
+ * Copyright (c) YEAR NOMBRE <MAIL>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,14 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file    : c1_driver.h
- * @date    : May 18, 2022
- * @author  : Lautaro Vera <lautarovera93@gmail.com>
- * @version : v1.0.0
+ * @file   : task_test.h
+ * @date   : Jun 11, 2022
+ * @author : NOMBRE <MAIL>
+ * @version	v1.0.0
  */
 
-#ifndef C1_DRIVER_H_
-#define C1_DRIVER_H_
+#ifndef INC_TASK_TEST_H_
+#define INC_TASK_TEST_H_
 
 /********************** CPP guard ********************************************/
 #ifdef __cplusplus
@@ -56,23 +56,13 @@ extern "C" {
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
+void task_test(void const *argument);
 
-/*
- * @brief
- */
-void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*));
-
-/*
- * @brief
- */
-void c1_driver_tx(uint8_t *data);
-
-uint8_t c1_read_data(void);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* C1_DRIVER_H_ */
+#endif /* INC_TASK_TEST_H_ */
 /********************** end of file ******************************************/
 

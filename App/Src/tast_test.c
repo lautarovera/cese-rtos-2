@@ -1,5 +1,5 @@
-/**
- * Copyright (c) May 18, 2022 Lautaro Vera <lautarovera93@gmail.com>.
+/*
+ * Copyright (c) YEAR NOMBRE <MAIL>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @file    : c1_driver.c
- * @date    : May 18, 2022
- * @author  : Lautaro Vera <lautarovera93@gmail.com>
- * @version : v1.0.0
+ * @file   : tast_test.c
+ * @date   : Jun 11, 2022
+ * @author : NOMBRE <MAIL>
+ * @version	v1.0.0
  */
 
 /********************** inclusions *******************************************/
@@ -41,59 +41,107 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "stm32f4xx_hal.h"
-#include "cmsis_os.h"
 
+#include "supportingFunctions.h"
+#include "c2_parser.h"
+#include "cmsis_os2.h"
 /********************** macros and definitions *******************************/
+#define DELAY_MS 2
+#define TEST_X ( 0 )
 
-#define UART_RX_IT_COUNT 1
+#if( TEST_X == 0 )
+// Paquete correcto
+#define SIZE_PACKET  13
+static const char *packet_test = "(2546PHOLA5F)";
+// Paquete con CRC erróneo
+static const char *packet_test2 = "(2546PHOLA48)";
+/* Funciona bien
+ new_message = true */
+#endif
 
+#if( TEST_X == 1 )
+// Paquete con CRC erróneo
+#define SIZE_PACKET  13
+static const char *packet_test = "(2546PHOLA48)";
+/* Detecta CRC erróneo
+ new_message = false */
+#endif
+
+#if( TEST_X == 2 )
+// Paquete incompleto sin EOM
+#define SIZE_PACKET  3
+static const char *packet_test = "(52";
+/* Termina por Timeout
+ * La maquina de estados se actualiza solo cuando recibe un dato desde la uart,
+ * al producirse el timeout debe llevarse la FSM al estado IDLE, descartando lo
+ * recibido *
+ * */
+
+#endif
 /********************** internal data declaration ****************************/
-
-static void (*tx_cb_func)(uint8_t*);
-static void (*rx_cb_func)(uint8_t*);
-
-static uint8_t rx_buffer[UART_RX_IT_COUNT];
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
 
 /********************** external data definition *****************************/
-
-extern UART_HandleTypeDef huart3;
-
+extern osTimerId_t timeoutHandle;
+extern osMemoryPoolId_t pdu_pool_id;
 /********************** internal functions definition ************************/
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  (*rx_cb_func)(rx_buffer);
-
-  HAL_UART_Receive_IT(huart, rx_buffer, UART_RX_IT_COUNT);
-}
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-  (*tx_cb_func)((uint8_t*)"TX");
-}
 /********************** external functions definition ************************/
-
-void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
+void task_test(void const *argument)
 {
-  tx_cb_func = tx_cb;
-  rx_cb_func = rx_cb;
+  /* Print out the name of this task. */
+  vPrintString("Inicio tarea de test \n\n");
+  uint8_t *tmp = NULL ,i=0 , k=5;
 
-  HAL_UART_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
+
+  c2_parser_init();
+
+  /*
+   * Envío de paquete correcto 10 paquetes
+   * en el quinto se intercala una demora
+   * octavo CRC inválido
+   */
+  for (k = 0; k < SIZE_PACKET; k++)
+  {
+    tmp = (uint8_t*)packet_test;
+    if (k == 8)
+    {
+      tmp = (uint8_t*)packet_test2;
+    }
+
+    for (i = 0; i < SIZE_PACKET; i++)
+    {
+      c2_parser_rx_cb(*tmp++);
+      osDelay(DELAY_MS);
+      // Se intercala demora
+      if (k == 5)
+      {
+        osDelay(3 * DELAY_MS);
+      }
+    }
+
+    osDelay(10 * DELAY_MS);
+    if (c2_is_new_message())
+    {
+      vPrintString("Mensaje correcto \n");
+      c2_read_message();
+    }
+    else
+    {
+      vPrintString("Error detectado \n");
+    }
+
+    osDelay(DELAY_MS);
+  }
+  //************************
+
+  vPrintString("\nFin de test \n");
+
+  while(1){
+    osDelay(10*DELAY_MS);
+  }
 }
-
-void c1_driver_tx(uint8_t *data){
-  //CUIDADO ACA, QUIZAS HAY QUE HACER UN MEMCPY DE DATA? SE ESTA PASANDO EL PUNTERO
-  HAL_UART_Transmit_IT(&huart3, data, 1u);
-}
-
-uint8_t c1_read_data(void)
-{
-  return rx_buffer[0];
-};
 /********************** end of file ******************************************/
-

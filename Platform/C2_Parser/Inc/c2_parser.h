@@ -59,9 +59,11 @@ extern "C" {
 void c2_parser_init(void);
 void c2_read_message(void);
 bool c2_is_new_message(void);
+uint8_t *c2_create_sdu(uint8_t *msg);
 
 // TODO: Se define como externa para debug, luego cambiar la visibilidad
 void c2_parser_rx_cb(uint8_t data);
+void timeout_cb(void const *arg);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }

@@ -69,6 +69,10 @@ void Error_Handler(void);
 #define STLK_RX_GPIO_Port GPIOD
 #define STLK_TX_Pin GPIO_PIN_9
 #define STLK_TX_GPIO_Port GPIOD
+#define USB_PowerSwitchOn_Pin GPIO_PIN_6
+#define USB_PowerSwitchOn_GPIO_Port GPIOG
+#define USB_OverCurrent_Pin GPIO_PIN_7
+#define USB_OverCurrent_GPIO_Port GPIOG
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
@@ -76,9 +80,6 @@ void Error_Handler(void);
 #define LD2_Pin GPIO_PIN_7
 #define LD2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define TASKS_INSIDE_MAIN	0
-#define TASKS_OUTSIDE_MAIN	1
-#define TASKS_SCOPE			TASKS_OUTSIDE_MAIN
 
 /* USER CODE END Private defines */
 
