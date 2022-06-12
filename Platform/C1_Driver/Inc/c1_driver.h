@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 31 may. 2022 Lautaro Vera <lautarovera93@gmail.com>.
+ * Copyright (c) May 18, 2022 Lautaro Vera <lautarovera93@gmail.com>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,14 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file    : c2_parser.h
- * @date    : 31 may. 2022
+ * @file    : c1_driver.h
+ * @date    : May 18, 2022
  * @author  : Lautaro Vera <lautarovera93@gmail.com>
  * @version : v1.0.0
  */
 
-#ifndef C2_PARSER_INC_C2_PARSER_H_
-#define C2_PARSER_INC_C2_PARSER_H_
+#ifndef C1_DRIVER_H_
+#define C1_DRIVER_H_
 
 /********************** CPP guard ********************************************/
 #ifdef __cplusplus
@@ -56,20 +56,23 @@ extern "C" {
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
-void c2_parser_init(void);
-void c2_read_message(void);
-bool c2_is_new_message(void);
-uint8_t *c2_create_sdu(uint8_t *msg);
 
-// TODO: Se define como externa para debug, luego cambiar la visibilidad
-void c2_parser_rx_cb(uint8_t data);
-void timeout_cb(void const *arg);
-void c2_parser_tx_cb(void);
+/*
+ * @brief
+ */
+void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*));
+
+/*
+ * @brief
+ */
+void c1_driver_tx(uint8_t *data);
+
+
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* C2_PARSER_INC_C2_PARSER_H_ */
+#endif /* C1_DRIVER_H_ */
 /********************** end of file ******************************************/
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 31 may. 2022 Lautaro Vera <lautarovera93@gmail.com>.
+ * Copyright (c) May 18, 2022 Lautaro Vera <lautarovera93@gmail.com>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,47 +29,67 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file    : c2_parser.h
- * @date    : 31 may. 2022
+ *
+ * @file    : c1_driver.c
+ * @date    : May 18, 2022
  * @author  : Lautaro Vera <lautarovera93@gmail.com>
  * @version : v1.0.0
  */
-
-#ifndef C2_PARSER_INC_C2_PARSER_H_
-#define C2_PARSER_INC_C2_PARSER_H_
-
-/********************** CPP guard ********************************************/
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /********************** inclusions *******************************************/
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "stm32f4xx_hal.h"
+#include "cmsis_os.h"
 
-/********************** macros ***********************************************/
+/********************** macros and definitions *******************************/
 
-/********************** typedef **********************************************/
+#define UART_RX_IT_COUNT 1
 
-/********************** external data declaration ****************************/
+/********************** internal data declaration ****************************/
 
-/********************** external functions declaration ***********************/
-void c2_parser_init(void);
-void c2_read_message(void);
-bool c2_is_new_message(void);
-uint8_t *c2_create_sdu(uint8_t *msg);
+static void (*tx_cb_func)(uint8_t*);
+static void (*rx_cb_func)(uint8_t*);
 
-// TODO: Se define como externa para debug, luego cambiar la visibilidad
-void c2_parser_rx_cb(uint8_t data);
-void timeout_cb(void const *arg);
-void c2_parser_tx_cb(void);
-/********************** End of CPP guard *************************************/
-#ifdef __cplusplus
+static uint8_t rx_buffer[UART_RX_IT_COUNT];
+
+/********************** internal functions declaration ***********************/
+
+/********************** internal data definition *****************************/
+
+/********************** external data definition *****************************/
+
+extern UART_HandleTypeDef huart3;
+
+/********************** internal functions definition ************************/
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  (*rx_cb_func)(rx_buffer);
+
+  HAL_UART_Receive_IT(huart, rx_buffer, UART_RX_IT_COUNT);
 }
-#endif
 
-#endif /* C2_PARSER_INC_C2_PARSER_H_ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  (*tx_cb_func)((uint8_t*)"TX");
+}
+/********************** external functions definition ************************/
+
+void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
+{
+  tx_cb_func = tx_cb;
+  rx_cb_func = rx_cb;
+
+  HAL_UART_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
+}
+
+void c1_driver_tx(uint8_t *data){
+  //CUIDADO ACA, QUIZAS HAY QUE HACER UN MEMCPY DE DATA? SE ESTA PASANDO EL PUNTERO
+  HAL_UART_Transmit_IT(&huart3, data, 1u);
+}
+
 /********************** end of file ******************************************/
 

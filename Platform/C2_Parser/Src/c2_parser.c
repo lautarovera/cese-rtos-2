@@ -44,7 +44,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "cmsis_os2.h"
-//#include "c1_driver.h"
+#include "c1_driver.h"
 #include "c2_parser.h"
 #include "crc8.h"
 
@@ -202,7 +202,7 @@ void c2_parser_rx_cb(uint8_t data)
 void c2_parser_init(void)
 {
   //TODO: Setear los callback de la capa C1
-  //c1_driver_init(tx_cb, rx_cb)
+ //c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);
 //  crc8_init();
 
  /* TODO: Cambio, el time se crea en el main, podria hacerse acá tambien
@@ -235,5 +235,9 @@ bool c2_is_new_message(void)
 void c2_read_message(void)
 {
   new_message = false;
+}
+void c2_parser_tx_cb(void)
+{
+
 }
 /********************** end of file ******************************************/
