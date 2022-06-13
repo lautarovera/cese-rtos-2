@@ -76,10 +76,11 @@ static osPoolId pdu_pool_id;
 */
 osMemoryPoolId_t pdu_pool_id;
 extern osTimerId_t timeoutHandle;
-#define timeout_id timeoutHandle
+//#define timeout_id timeoutHandle
 /********************** external data definition *****************************/
 static bool new_message = false;
 static bool timeout = false;
+static uint8_t *msg = NULL;
 
 /********************** internal functions definition ************************/
 void timeout_cb(void const *arg)
@@ -110,7 +111,6 @@ static bool check_crc(uint8_t *msg, uint16_t len)
 void c2_parser_rx_cb(uint8_t data)
 {
   static uint16_t msg_len = 0;
-  static uint8_t *msg = NULL;
   static uint8_t *msg_ptr = NULL;
   static state_t state_reg = IDLE;
 
@@ -175,14 +175,14 @@ void c2_parser_rx_cb(uint8_t data)
         if (EOM == data)
         {
           new_message = check_crc(msg, msg_len);
-          if(!new_message)
+          if (!new_message)
           {
             message_error(msg);
-          }else{
-            c2_create_sdu(msg);
           }
           state_reg = IDLE;
-        }else{
+        }
+        else
+        {
           osTimerStart(timeout_id, TIMEOUT_MS);
           *msg_ptr++ = data;
           msg_len++;
@@ -202,7 +202,7 @@ void c2_parser_rx_cb(uint8_t data)
 void c2_parser_init(void)
 {
   //TODO: Setear los callback de la capa C1
- //c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);
+ c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);
 //  crc8_init();
 
  /* TODO: Cambio, el time se crea en el main, podria hacerse acá tambien
@@ -221,10 +221,38 @@ uint8_t *c2_create_sdu(uint8_t *msg)
 
   sdu = (uint8_t *)malloc(len - ID_SIZE - CRC_SIZE);
 
-  memcpy(sdu, &msg[ID_SIZE], strlen((const char *)sdu));
+  memcpy(sdu, &msg[ID_SIZE], strlen((const char*)sdu));
 
-  osMemoryPoolFree(pdu_pool_id, msg);
   return sdu;
+}
+
+void c2_delete_sdu(uint8_t *sdu)
+{
+  free(sdu);
+  sdu = NULL;
+}
+
+void c2_parser_task(void *args)
+{
+  uint8_t *sdu = NULL;
+  uint8_t *pdu = NULL;
+  uint8_t id[ID_SIZE];
+
+  for (;;)
+  {
+    if (c2_is_new_message())
+    {
+      sdu = create_sdu(msg);
+      memcpy(id, msg, ID_SIZE);
+      osMemoryPoolFree(pdu_pool_id, msg);
+
+      osMessageQueuePut(QueueUpstreamHandle, sdu, 0, 0);
+
+      osMessageQueueGet(QueueDownstreamHandle, pdu, 0, 0);
+
+      osMessageQueuePut(QueueOutputHandle, pdu, 0, 0);
+    }
+  }
 }
 
 bool c2_is_new_message(void)
@@ -236,6 +264,7 @@ void c2_read_message(void)
 {
   new_message = false;
 }
+
 void c2_parser_tx_cb(void)
 {
 

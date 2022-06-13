@@ -45,14 +45,11 @@
 #include "cmsis_os.h"
 
 /********************** macros and definitions *******************************/
-
 #define UART_RX_IT_COUNT 1
 
 /********************** internal data declaration ****************************/
-
 static void (*tx_cb_func)(uint8_t*);
 static void (*rx_cb_func)(uint8_t*);
-
 static uint8_t rx_buffer[UART_RX_IT_COUNT];
 
 /********************** internal functions declaration ***********************/
@@ -65,18 +62,13 @@ extern UART_HandleTypeDef huart3;
 
 /********************** internal functions definition ************************/
 
+/********************** external functions definition ************************/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   (*rx_cb_func)(rx_buffer);
 
   HAL_UART_Receive_IT(huart, rx_buffer, UART_RX_IT_COUNT);
 }
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-  (*tx_cb_func)((uint8_t*)"TX");
-}
-/********************** external functions definition ************************/
 
 void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
 {
@@ -86,10 +78,21 @@ void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
   HAL_UART_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
 }
 
-void c1_driver_tx(uint8_t *data){
-  //CUIDADO ACA, QUIZAS HAY QUE HACER UN MEMCPY DE DATA? SE ESTA PASANDO EL PUNTERO
-  HAL_UART_Transmit_IT(&huart3, data, 1u);
+void c1_driver_tx(uint8_t *data, uint16_t size)
+{
+  HAL_UART_Transmit(&huart3, data, size);
 }
 
+void c1_driver_task(void *args)
+{
+  uint8_t *msg;
+
+  for (;;)
+  {
+    osMessageQueueGet(QueueOutputHandle, msg, 0, 0);
+
+    c1_driver_tx(msg, strlen(msg));
+  }
+}
 /********************** end of file ******************************************/
 

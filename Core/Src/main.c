@@ -22,7 +22,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "c1_driver.h"
+#include "c2_parser.h"
+//#include "c3_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +58,42 @@ const osThreadAttr_t TaskTest_attributes = {
   .stack_size = 160 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for TaskC1 */
+osThreadId_t TaskC1Handle;
+const osThreadAttr_t TaskC1_attributes = {
+  .name = "TaskC1",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for TaskC2 */
+osThreadId_t TaskC2Handle;
+const osThreadAttr_t TaskC2_attributes = {
+  .name = "TaskC2",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for TaskC3 */
+osThreadId_t TaskC3Handle;
+const osThreadAttr_t TaskC3_attributes = {
+  .name = "TaskC3",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for QueueOutput */
+osMessageQueueId_t QueueOutputHandle;
+const osMessageQueueAttr_t QueueOutput_attributes = {
+  .name = "QueueOutput"
+};
+/* Definitions for QueueUpstream */
+osMessageQueueId_t QueueUpstreamHandle;
+const osMessageQueueAttr_t QueueUpstream_attributes = {
+  .name = "QueueUpstream"
+};
+/* Definitions for QueueDownstream */
+osMessageQueueId_t QueueDownstreamHandle;
+const osMessageQueueAttr_t QueueDownstream_attributes = {
+  .name = "QueueDownstream"
+};
 /* Definitions for timeout */
 osTimerId_t timeoutHandle;
 const osTimerAttr_t timeout_attributes = {
@@ -71,6 +109,9 @@ static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 void StartDefaultTask(void *argument);
 extern void task_test(void *argument);
+extern void c1_driver_task(void *argument);
+extern void c2_parser_task(void *argument);
+extern void c3_app_task(void *argument);
 extern void timeout_cb(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -135,6 +176,16 @@ int main(void)
   //osTimerStart(testHandle, 100);
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of QueueOutput */
+  QueueOutputHandle = osMessageQueueNew (16, sizeof(uint8_t*), &QueueOutput_attributes);
+
+  /* creation of QueueUpstream */
+  QueueUpstreamHandle = osMessageQueueNew (16, sizeof(uint8_t*), &QueueUpstream_attributes);
+
+  /* creation of QueueDownstream */
+  QueueDownstreamHandle = osMessageQueueNew (16, sizeof(uint8_t*), &QueueDownstream_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -145,6 +196,15 @@ int main(void)
 
   /* creation of TaskTest */
   TaskTestHandle = osThreadNew(task_test, NULL, &TaskTest_attributes);
+
+  /* creation of TaskC1 */
+  TaskC1Handle = osThreadNew(c1_driver_task, NULL, &TaskC1_attributes);
+
+  /* creation of TaskC2 */
+  TaskC2Handle = osThreadNew(c2_parser_task, NULL, &TaskC2_attributes);
+
+  /* creation of TaskC3 */
+  TaskC3Handle = osThreadNew(c3_app_task, NULL, &TaskC3_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
