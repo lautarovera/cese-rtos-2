@@ -65,7 +65,7 @@ void init_c3(void);
 /**
  * @brief
  */
-void c3_task(void);
+void c3_app_task(void);
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus

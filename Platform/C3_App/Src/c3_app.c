@@ -199,8 +199,9 @@ static void process_response(error_codes_t error, char *response_string)
 
 static void send_response(char *response_string)
 {
-  //TODO send response to c2
-  //HABRIA QUE RESERVAR LA MEMORIA Y PASAR POR COLA
+  uint8_t *pdu = pvPortMalloc(strlen(response_string + 1));
+
+  osMessageQueuePut(QueueDownstreamHandle, pdu, 0, 0);
 }
 
 static error_codes_t modify_string(
@@ -455,9 +456,9 @@ void init_c3(void)
   //msg_response_pool_id = osPoolCreate(osPool(msg_response_pool));
 }
 
-void c3_task(void)
+void c3_app_task(void)
 {
-
+  uint8_t *sdu = NULL;
   state_t fsm;
   error_codes_t error = NO_ERROR;
   char error_response[10];
@@ -465,9 +466,14 @@ void c3_task(void)
   //TODO determine how should c3 work
   while (1)
   {
-    //queue_receive ACA HABRIA QUE RECIBIR DE LA COLA DE RTOS
-    //LIBERAR MEMORIA
+    osMessageQueueGet(QueueUpstreamHandle, sdu, 0, 0);
+
     state_reset(&fsm);
+
+    memcpy(in_string, sdu, strlen(sdu));
+    vPortFree(sdu);
+    sdu = NULL;
+
     error = process_string(&fsm);
     if (NO_ERROR != error)
     {

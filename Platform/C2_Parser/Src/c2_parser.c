@@ -80,7 +80,7 @@ extern osTimerId_t timeoutHandle;
 /********************** external data definition *****************************/
 static bool new_message = false;
 static bool timeout = false;
-static uint8_t *msg = NULL;
+static uint8_t *msg_in = NULL;
 
 /********************** internal functions definition ************************/
 void timeout_cb(void const *arg)
@@ -120,13 +120,13 @@ void c2_parser_rx_cb(uint8_t data)
       if (SOM == data)
       {
         //TODO: Cambio CMSIS_V2 msg = (uint8_t*)osPoolCAlloc(pdu_pool_id);
-        msg = osMemoryPoolAlloc(pdu_pool_id, 0);
-        if (NULL == msg)
+        msg_in = osMemoryPoolAlloc(pdu_pool_id, 0);
+        if (NULL == msg_in)
         {
-          message_error(msg);
+          message_error(msg_in);
           state_reg = IDLE;
         }
-        msg_ptr = msg;
+        msg_ptr = msg_in;
         msg_len = 0;
 
         osTimerStart(timeout_id, TIMEOUT_MS);
@@ -138,7 +138,7 @@ void c2_parser_rx_cb(uint8_t data)
       if (SOM == data || timeout)
       {
         timeout = false;
-        message_error(msg);
+        message_error(msg_in);
         state_reg = IDLE;
       }
       else if (osTimerStop(timeout_id) == osOK)
@@ -152,13 +152,13 @@ void c2_parser_rx_cb(uint8_t data)
         }
         else
         {
-          message_error(msg);
+          message_error(msg_in);
           state_reg = IDLE;
         }
       }
       else
       {
-        message_error(msg);
+        message_error(msg_in);
         state_reg = IDLE;
       }
       break;
@@ -167,17 +167,17 @@ void c2_parser_rx_cb(uint8_t data)
       if (SOM == data || MAX_MSG_SIZE < msg_len || timeout)
       {
         timeout = false;
-        message_error(msg);
+        message_error(msg_in);
         state_reg = IDLE;
       }
       else if (osTimerStop(timeout_id) == osOK)
       {
         if (EOM == data)
         {
-          new_message = check_crc(msg, msg_len);
+          new_message = check_crc(msg_in, msg_len);
           if (!new_message)
           {
-            message_error(msg);
+            message_error(msg_in);
           }
           state_reg = IDLE;
         }
@@ -190,7 +190,7 @@ void c2_parser_rx_cb(uint8_t data)
       }
       else
       {
-        message_error(msg);
+        message_error(msg_in);
         state_reg = IDLE;
       }
       break;
@@ -219,38 +219,40 @@ uint8_t *c2_create_sdu(uint8_t *msg)
   uint8_t *sdu = NULL;
   uint16_t len = strlen((const char *)msg);
 
-  sdu = (uint8_t *)malloc(len - ID_SIZE - CRC_SIZE);
+  sdu = (uint8_t *)pvPortMalloc(len - ID_SIZE - CRC_SIZE);
 
   memcpy(sdu, &msg[ID_SIZE], strlen((const char*)sdu));
 
   return sdu;
 }
 
-void c2_delete_sdu(uint8_t *sdu)
-{
-  free(sdu);
-  sdu = NULL;
-}
-
 void c2_parser_task(void *args)
 {
   uint8_t *sdu = NULL;
   uint8_t *pdu = NULL;
+  uint8_t *msg_out = NULL;
   uint8_t id[ID_SIZE];
 
   for (;;)
   {
     if (c2_is_new_message())
     {
-      sdu = create_sdu(msg);
-      memcpy(id, msg, ID_SIZE);
-      osMemoryPoolFree(pdu_pool_id, msg);
+      sdu = create_sdu(msg_in);
+      memcpy(id, msg_in, ID_SIZE);
+      osMemoryPoolFree(pdu_pool_id, msg_in);
 
       osMessageQueuePut(QueueUpstreamHandle, sdu, 0, 0);
 
       osMessageQueueGet(QueueDownstreamHandle, pdu, 0, 0);
 
-      osMessageQueuePut(QueueOutputHandle, pdu, 0, 0);
+      msg_out = pvPortMalloc(ID_SIZE + strlen(pdu));
+
+      memcpy(msg_out, id, ID_SIZE);
+      memcpy(&msg_out[ID_SIZE], pdu, strlen(pdu));
+      vPortFree(pdu);
+      pdu = NULL;
+
+      osMessageQueuePut(QueueOutputHandle, msg_out, 0, 0);
     }
   }
 }

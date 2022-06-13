@@ -85,13 +85,15 @@ void c1_driver_tx(uint8_t *data, uint16_t size)
 
 void c1_driver_task(void *args)
 {
-  uint8_t *msg;
+  uint8_t *msg_out = NULL;
 
   for (;;)
   {
-    osMessageQueueGet(QueueOutputHandle, msg, 0, 0);
+    osMessageQueueGet(QueueOutputHandle, msg_out, 0, 0);
 
-    c1_driver_tx(msg, strlen(msg));
+    c1_driver_tx(msg_out, strlen(msg_out));
+    vPortFree(msg_out);
+    msg_out = NULL;
   }
 }
 /********************** end of file ******************************************/
