@@ -165,7 +165,7 @@ static error_codes_t process_string(state_t *in_state)
     if ((error_code = verify_invalid_chars(in_state->in_string + 1, strlen(in_state->in_string) - 1,
                                            in_state->uppercase_indexes, in_state->separators_indexes)) == NO_ERROR)
     {
-      error_code = modify_string(in_state->in_string + 1, strlen(in_state->in_string) - 1, in_state->out_string,
+      error_code = modify_string(in_state->in_string, strlen(in_state->in_string) - 1, in_state->out_string,
                                  in_state->uppercase_indexes, in_state->separators_indexes, in_state->action);
     }
   }
@@ -217,6 +217,9 @@ static error_codes_t modify_string(
 {
   uint8_t separator_index = 0;
   uint8_t uppercase_index = 0;
+
+  /* Bugfix: hay que enviar opcode a C2 */
+  *string_out++ = *string_in++;
   //Se modifica el primer caracter segun el opcode
   switch (opcode)
   {
