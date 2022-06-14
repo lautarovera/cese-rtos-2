@@ -56,7 +56,6 @@ extern "C" {
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
-void c2_parser_rx_cb(uint8_t *data_ptr);
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus

@@ -469,7 +469,7 @@ void c3_app_task(void)
   //TODO determine how should c3 work
   while (1)
   {
-    osMessageQueueGet(QueueUpstreamHandle, sdu, 0, 0);
+    osMessageQueueGet(QueueUpstreamHandle, (uint8_t *)&sdu, 0, osWaitForever);
 
     state_reset(&fsm);
 //TODO: Verificar si esta bien copiar al dato fsm.in_string

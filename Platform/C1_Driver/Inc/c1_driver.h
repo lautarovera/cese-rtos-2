@@ -57,16 +57,6 @@ extern "C" {
 
 /********************** external functions declaration ***********************/
 
-/*
- * @brief
- */
-void c1_driver_init(void (*rx_cb)(uint8_t*));
-
-/*
- * @brief
- */
-void c1_driver_tx(uint8_t *data);
-
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus

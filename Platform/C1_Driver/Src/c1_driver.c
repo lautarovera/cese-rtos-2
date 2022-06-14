@@ -90,7 +90,7 @@ void c1_driver_task(void *args)
 
   for (;;)
   {
-    osMessageQueueGet(QueueOutputHandle, msg_out, 0, 0);
+    osMessageQueueGet(QueueOutputHandle, (uint8_t *)&msg_out, 0, osWaitForever);
 
     c1_driver_tx(msg_out, strlen(msg_out));
     vPortFree(msg_out);

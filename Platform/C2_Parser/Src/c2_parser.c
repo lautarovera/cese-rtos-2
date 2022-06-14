@@ -83,7 +83,7 @@ extern osMessageQueueId_t QueueOutputHandle;
 void timeout_cb(void *argument)
 {
   timeout = true;
-  c2_parser_rx_cb(0x00);        //Se actualiza la ME con un código de error y timeot=true
+//  c2_parser_rx_cb(0x00);        //Se actualiza la ME con un código de error y timeot=true
 }
 
 static void message_error(uint8_t *msg)
@@ -235,9 +235,9 @@ void c2_parser_task(void *args)
       memcpy(id, msg_in, ID_SIZE);
       osMemoryPoolFree(pdu_pool_id, msg_in);
 
-      osMessageQueuePut(QueueUpstreamHandle, sdu, 0, 0);
+      osMessageQueuePut(QueueUpstreamHandle, (uint8_t *)&sdu, 0, osWaitForever);
 
-      osMessageQueueGet(QueueDownstreamHandle, pdu, 0, 0);
+      osMessageQueueGet(QueueDownstreamHandle, (uint8_t *)&pdu, 0, osWaitForever);
 
       msg_out = pvPortMalloc(ID_SIZE + strlen((const char *)pdu));
 
