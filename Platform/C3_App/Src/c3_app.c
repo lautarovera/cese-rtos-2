@@ -468,7 +468,7 @@ void c3_app_task(void)
   uint8_t *pdu = NULL;
   state_t fsm;
   error_codes_t error = NO_ERROR;
-  char error_response[10];
+  char error_response[10]={0u};
 
   c3_app_init();
 
@@ -486,9 +486,11 @@ void c3_app_task(void)
     if (NO_ERROR != error)
     {
       process_response(error, error_response);
-    }
-    pdu = create_pdu(fsm.out_string);
+      pdu = create_pdu(error_response);
 
+    }else{
+    	pdu = create_pdu(fsm.out_string);
+    }
     osMessageQueuePut(QueueDownstreamHandle, (uint8_t*)&pdu, 0, 0);
   }
 }
