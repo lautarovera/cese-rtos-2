@@ -102,7 +102,7 @@ static error_codes_t process_string(state_t *in_state);
 
 static void process_response(error_codes_t error, char *response_string);
 
-static void send_response(char *response_string);
+static uint8_t* create_pdu(char *response_string);
 
 static error_codes_t modify_string(
     char *string_in,
@@ -127,12 +127,12 @@ static error_codes_t process_opcode(char *string_in, action_codes_t *opcode_out)
 /********************** internal data definition *****************************/
 
 /*
-static osPoolDef(pdu_pool, 1u, MAX_STRING_LENGTH);
-static osPoolId pdu_pool_id;
+ static osPoolDef(pdu_pool, 1u, MAX_STRING_LENGTH);
+ static osPoolId pdu_pool_id;
 
-static osPoolDef(msg_response_pool, 1u, MAX_STRING_LENGTH);
-static osPoolId msg_response_pool_id;
-*/
+ static osPoolDef(msg_response_pool, 1u, MAX_STRING_LENGTH);
+ static osPoolId msg_response_pool_id;
+ */
 
 /********************** external data definition *****************************/
 extern osMessageQueueId_t QueueDownstreamHandle;
@@ -198,11 +198,13 @@ static void process_response(error_codes_t error, char *response_string)
   }
 }
 
-static void send_response(char *response_string)
+static uint8_t* create_pdu(char *response_string)
 {
-  uint8_t *pdu = pvPortMalloc(strlen(response_string + 1));
+  uint8_t *pdu = pvPortMalloc(strlen(response_string) + 1);
 
-  osMessageQueuePut(QueueDownstreamHandle, pdu, 0, 0);
+  memcpy(pdu, response_string, strlen(response_string) + 1);
+
+  return pdu;
 }
 
 static error_codes_t modify_string(
@@ -460,20 +462,20 @@ static void c3_app_init(void)
 void c3_app_task(void)
 {
   uint8_t *sdu = NULL;
+  uint8_t *pdu = NULL;
   state_t fsm;
   error_codes_t error = NO_ERROR;
   char error_response[10];
 
   c3_app_init();
 
-  //TODO determine how should c3 work
   while (1)
   {
-    osMessageQueueGet(QueueUpstreamHandle, (uint8_t *)&sdu, 0, osWaitForever);
+    osMessageQueueGet(QueueUpstreamHandle, (uint8_t*)&sdu, 0, osWaitForever);
 
     state_reset(&fsm);
-//TODO: Verificar si esta bien copiar al dato fsm.in_string
-    memcpy(fsm.in_string, sdu, strlen((const char *)sdu));
+
+    memcpy(fsm.in_string, sdu, strlen((const char*)sdu));
     vPortFree(sdu);
     sdu = NULL;
 
@@ -481,12 +483,10 @@ void c3_app_task(void)
     if (NO_ERROR != error)
     {
       process_response(error, error_response);
-      send_response(error_response);
     }
-    else{
-      send_response(fsm.out_string);
-    }
-  }
+    pdu = create_pdu(fsm.out_string);
 
+    osMessageQueuePut(QueueDownstreamHandle, (uint8_t*)&pdu, 0, osWaitForever);
+  }
 }
 /********************** end of file ******************************************/

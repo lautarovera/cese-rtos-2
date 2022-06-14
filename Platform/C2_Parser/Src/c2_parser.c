@@ -246,7 +246,7 @@ void c2_parser_task(void *args)
       vPortFree(pdu);
       pdu = NULL;
 
-      osMessageQueuePut(QueueOutputHandle, msg_out, 0, 0);
+      osMessageQueuePut(QueueOutputHandle, (uint8_t *)&msg_out, 0, osWaitForever);
     }
   }
   osDelay(10);
