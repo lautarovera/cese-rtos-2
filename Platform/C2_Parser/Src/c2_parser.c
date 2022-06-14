@@ -53,6 +53,7 @@
 #define EOM                     ')'
 #define MAX_MSG_SIZE            200u
 #define ID_SIZE                 4u
+#define OPCPDE_SIZE             1u
 #define CRC_SIZE                2u
 #define TIMEOUT_MS              4u
 
@@ -239,12 +240,15 @@ void c2_parser_task(void *args)
 
       osMessageQueueGet(QueueDownstreamHandle, (uint8_t *)&pdu, 0, osWaitForever);
 
-      msg_out = pvPortMalloc(ID_SIZE + strlen((const char *)pdu));
+      size_t msg_out_len = ID_SIZE + strlen((const char *)pdu) + CRC_SIZE;
+      msg_out = pvPortMalloc(msg_out_len);
 
       memcpy(msg_out, id, ID_SIZE);
       memcpy(&msg_out[ID_SIZE], pdu, strlen((const char *)pdu));
       vPortFree(pdu);
       pdu = NULL;
+
+      sprintf((char *)&msg_out[msg_out_len - CRC_SIZE], "%X", crc8_calc(0u, (uint8_t*)msg_out, msg_out_len - CRC_SIZE));
 
       osMessageQueuePut(QueueOutputHandle, (uint8_t *)&msg_out, 0, osWaitForever);
     }
