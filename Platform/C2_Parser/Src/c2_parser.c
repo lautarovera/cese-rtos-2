@@ -113,8 +113,10 @@ static uint8_t *c2_create_sdu(uint8_t *msg)
   uint16_t len = strlen((const char *)msg);
 
   sdu = (uint8_t *)pvPortMalloc(len - ID_SIZE - CRC_SIZE + 1);
-
-  memcpy(sdu, &msg[ID_SIZE], len - ID_SIZE - CRC_SIZE);
+  if (NULL != sdu)
+  {
+    memcpy(sdu, &msg[ID_SIZE], len - ID_SIZE - CRC_SIZE);
+  }
 
   return sdu;
 }
@@ -131,7 +133,7 @@ static void c2_clear_new_message(void)
 
 static void c2_parser_init(void)
 {
-  pdu_pool_id = osMemoryPoolNew(10, MAX_MSG_SIZE, NULL);
+  pdu_pool_id = osMemoryPoolNew(1, MAX_MSG_SIZE, NULL);
 }
 
 /********************** external functions definition ************************/
@@ -250,14 +252,17 @@ void c2_parser_task(void *args)
 
       size_t msg_out_len = SOM_SIZE + ID_SIZE + strlen((const char *)pdu) + CRC_SIZE + EOM_SIZE;
       msg_out = pvPortMalloc(msg_out_len + 1);
+      if (NULL != msg_out)
+      {
+        sprintf((char*)msg_out, "%s%s", id, pdu);
+        sprintf((char*)msg_out, "(%s%s%X)", id, pdu,
+                crc8_calc(0u, (uint8_t*)msg_out, msg_out_len - CRC_SIZE - SOM_SIZE - EOM_SIZE));
 
-      sprintf((char *)msg_out, "%s%s", id, pdu);
-      sprintf((char *)msg_out, "(%s%s%X)", id, pdu, crc8_calc(0u, (uint8_t*)msg_out, msg_out_len - CRC_SIZE - SOM_SIZE - EOM_SIZE));
+        osMessageQueuePut(QueueOutputHandle, (uint8_t*)&msg_out, 0, 0);
+      }
 
       vPortFree(pdu);
       pdu = NULL;
-
-      osMessageQueuePut(QueueOutputHandle, (uint8_t *)&msg_out, 0, 0);
 
       c2_clear_new_message();
     }

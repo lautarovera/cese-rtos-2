@@ -76,7 +76,7 @@ const osThreadAttr_t TaskC2_attributes = {
 osThreadId_t TaskC3Handle;
 const osThreadAttr_t TaskC3_attributes = {
   .name = "TaskC3",
-  .stack_size = 128 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for QueueOutput */
@@ -169,7 +169,7 @@ int main(void)
 
   /* Create the timer(s) */
   /* creation of timeout */
-  timeoutHandle = osTimerNew(timeout_cb, osTimerOnce, NULL, &timeout_attributes);
+//  timeoutHandle = osTimerNew(timeout_cb, osTimerOnce, NULL, &timeout_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */

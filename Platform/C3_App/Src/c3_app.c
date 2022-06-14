@@ -102,7 +102,7 @@ static error_codes_t process_string(state_t *in_state);
 
 static void process_response(error_codes_t error, char *response_string);
 
-static uint8_t* create_pdu(char *response_string);
+static uint8_t* create_pdu(state_t *fsm);
 
 static error_codes_t modify_string(
     char *string_in,
@@ -137,6 +137,7 @@ static error_codes_t process_opcode(char *string_in, action_codes_t *opcode_out)
 /********************** external data definition *****************************/
 extern osMessageQueueId_t QueueDownstreamHandle;
 extern osMessageQueueId_t QueueUpstreamHandle;
+
 /********************** internal functions definition ************************/
 
 static void state_reset(state_t *fsm)
@@ -165,7 +166,7 @@ static error_codes_t process_string(state_t *in_state)
     if ((error_code = verify_invalid_chars(in_state->in_string + 1, strlen(in_state->in_string) - 1,
                                            in_state->uppercase_indexes, in_state->separators_indexes)) == NO_ERROR)
     {
-      error_code = modify_string(in_state->in_string, strlen(in_state->in_string) - 1, in_state->out_string,
+      error_code = modify_string(in_state->in_string + 1, strlen(in_state->in_string) - 1, in_state->out_string,
                                  in_state->uppercase_indexes, in_state->separators_indexes, in_state->action);
     }
   }
@@ -198,11 +199,13 @@ static void process_response(error_codes_t error, char *response_string)
   }
 }
 
-static uint8_t* create_pdu(char *response_string)
+static uint8_t* create_pdu(state_t *fsm)
 {
-  uint8_t *pdu = pvPortMalloc(strlen(response_string) + 1);
-
-  memcpy(pdu, response_string, strlen(response_string) + 1);
+  uint8_t *pdu = pvPortMalloc(strlen(fsm->out_string) + sizeof(fsm->action) + 1);
+  if (NULL != pdu)
+  {
+    sprintf((char *)pdu, "%c%s", fsm->action, fsm->out_string);
+  }
 
   return pdu;
 }
@@ -219,7 +222,7 @@ static error_codes_t modify_string(
   uint8_t uppercase_index = 0;
 
   /* Bugfix: hay que enviar opcode a C2 */
-  *string_out++ = *string_in++;
+//  *string_out++ = *string_in++;
   //Se modifica el primer caracter segun el opcode
   switch (opcode)
   {
@@ -472,7 +475,7 @@ void c3_app_task(void)
 
   c3_app_init();
 
-  while (1)
+  for(;;)
   {
     osMessageQueueGet(QueueUpstreamHandle, (uint8_t*)&sdu, 0, osWaitForever);
 
@@ -486,12 +489,21 @@ void c3_app_task(void)
     if (NO_ERROR != error)
     {
       process_response(error, error_response);
-      pdu = create_pdu(error_response);
-
-    }else{
-    	pdu = create_pdu(fsm.out_string);
+      size_t pdu_len = strlen(error_response) + 1;
+      pdu = pvPortMalloc(pdu_len);
+      if (NULL != pdu)
+      {
+        memcpy(pdu, error_response, pdu_len);
+      }
     }
-    osMessageQueuePut(QueueDownstreamHandle, (uint8_t*)&pdu, 0, 0);
+    else
+    {
+      pdu = create_pdu(&fsm);
+    }
+    if (NULL != pdu)
+    {
+      osMessageQueuePut(QueueDownstreamHandle, (uint8_t*)&pdu, 0, 0);
+    }
   }
 }
 /********************** end of file ******************************************/

@@ -91,7 +91,6 @@ void c1_driver_task(void *args)
   for (;;)
   {
     osMessageQueueGet(QueueOutputHandle, (uint8_t *)&msg_out, 0, osWaitForever);
-
     size_t msg_out_len = strlen((const char *)msg_out);
 
     c1_driver_tx(msg_out, msg_out_len);
