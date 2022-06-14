@@ -108,9 +108,9 @@ static uint8_t *c2_create_sdu(uint8_t *msg)
   uint8_t *sdu = NULL;
   uint16_t len = strlen((const char *)msg);
 
-  sdu = (uint8_t *)pvPortMalloc(len - ID_SIZE - CRC_SIZE);
+  sdu = (uint8_t *)pvPortMalloc(len - ID_SIZE - CRC_SIZE + 1);
 
-  memcpy(sdu, &msg[ID_SIZE], strlen((const char*)sdu));
+  memcpy(sdu, &msg[ID_SIZE], len - ID_SIZE - CRC_SIZE);
 
   return sdu;
 }
