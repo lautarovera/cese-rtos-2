@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
 
@@ -57,7 +58,7 @@ static uint8_t rx_buffer[UART_RX_IT_COUNT];
 /********************** internal data definition *****************************/
 
 /********************** external data definition *****************************/
-
+extern osMessageQueueId_t QueueOutputHandle;
 extern UART_HandleTypeDef huart3;
 
 /********************** internal functions definition ************************/
@@ -80,7 +81,7 @@ void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
 
 void c1_driver_tx(uint8_t *data, uint16_t size)
 {
-  HAL_UART_Transmit(&huart3, data, size);
+  HAL_UART_Transmit(&huart3, data, size,100);
 }
 
 void c1_driver_task(void *args)

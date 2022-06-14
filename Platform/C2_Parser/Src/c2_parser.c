@@ -47,7 +47,7 @@
 #include "c1_driver.h"
 #include "c2_parser.h"
 #include "crc8.h"
-
+#include "FreeRTOS.h"
 /********************** macros and definitions *******************************/
 #define SOM                     '('
 #define EOM                     ')'
@@ -76,14 +76,17 @@ static osPoolId pdu_pool_id;
 */
 osMemoryPoolId_t pdu_pool_id;
 extern osTimerId_t timeoutHandle;
-//#define timeout_id timeoutHandle
+#define timeout_id timeoutHandle
 /********************** external data definition *****************************/
 static bool new_message = false;
 static bool timeout = false;
 static uint8_t *msg_in = NULL;
 
+extern osMessageQueueId_t QueueDownstreamHandle;
+extern osMessageQueueId_t QueueUpstreamHandle;
+extern osMessageQueueId_t QueueOutputHandle;
 /********************** internal functions definition ************************/
-void timeout_cb(void const *arg)
+void timeout_cb(void *argument)
 {
   timeout = true;
   c2_parser_rx_cb(0x00);        //Se actualiza la ME con un código de error y timeot=true
@@ -237,7 +240,7 @@ void c2_parser_task(void *args)
   {
     if (c2_is_new_message())
     {
-      sdu = create_sdu(msg_in);
+      sdu = c2_create_sdu(msg_in);
       memcpy(id, msg_in, ID_SIZE);
       osMemoryPoolFree(pdu_pool_id, msg_in);
 

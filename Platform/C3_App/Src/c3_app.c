@@ -135,7 +135,8 @@ static osPoolId msg_response_pool_id;
 */
 
 /********************** external data definition *****************************/
-
+extern osMessageQueueId_t QueueDownstreamHandle;
+extern osMessageQueueId_t QueueUpstreamHandle;
 /********************** internal functions definition ************************/
 
 static void state_reset(state_t *fsm)
@@ -469,8 +470,8 @@ void c3_app_task(void)
     osMessageQueueGet(QueueUpstreamHandle, sdu, 0, 0);
 
     state_reset(&fsm);
-
-    memcpy(in_string, sdu, strlen(sdu));
+//TODO: Verificar si esta bien copiar al dato fsm.in_string
+    memcpy(fsm.in_string, sdu, strlen(sdu));
     vPortFree(sdu);
     sdu = NULL;
 

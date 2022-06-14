@@ -63,7 +63,7 @@ uint8_t *c2_create_sdu(uint8_t *msg);
 
 // TODO: Se define como externa para debug, luego cambiar la visibilidad
 void c2_parser_rx_cb(uint8_t data);
-void timeout_cb(void const *arg);
+void timeout_cb(void *argument);
 void c2_parser_tx_cb(void);
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
