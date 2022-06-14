@@ -2,7 +2,7 @@
 FREERTOS.FootprintOK=true
 FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK,Timers01,Queues01
 FREERTOS.Queues01=QueueOutput,16,uint8_t*,0,Dynamic,NULL,NULL;QueueUpstream,16,uint8_t*,0,Dynamic,NULL,NULL;QueueDownstream,16,uint8_t*,0,Dynamic,NULL,NULL
-FREERTOS.Tasks01=defaultTask,24,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;TaskTest,8,160,task_test,As external,NULL,Dynamic,NULL,NULL;TaskC1,24,128,c1_driver_task,As external,NULL,Dynamic,NULL,NULL;TaskC2,24,128,c2_parser_task,As external,NULL,Dynamic,NULL,NULL;TaskC3,24,128,c3_app_task,As external,NULL,Dynamic,NULL,NULL
+FREERTOS.Tasks01=defaultTask,24,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;TaskTest,24,160,task_test,As external,NULL,Dynamic,NULL,NULL;TaskC1,24,128,c1_driver_task,As external,NULL,Dynamic,NULL,NULL;TaskC2,24,128,c2_parser_task,As external,NULL,Dynamic,NULL,NULL;TaskC3,24,128,c3_app_task,As external,NULL,Dynamic,NULL,NULL
 FREERTOS.Timers01=timeout,timeout_cb,osTimerOnce,As external,NULL,Dynamic,NULL
 FREERTOS.configUSE_NEWLIB_REENTRANT=1
 File.Version=6

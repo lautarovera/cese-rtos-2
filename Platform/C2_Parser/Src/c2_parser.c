@@ -63,17 +63,11 @@ typedef enum
 } state_t;
 
 /********************** internal functions declaration ***********************/
-//static void timeout_cb(void const *arg);
 static void message_error(uint8_t *msg);
 static bool check_crc(uint8_t *msg, uint16_t len);
 
 /********************** internal data definition *****************************/
-/*//TODO: Cambiar ACA
-static osTimerDef(timeout, timeout_cb);
-static osTimerId timeout_id;
-static osPoolDef(pdu_pool, 1u, MAX_MSG_SIZE);
-static osPoolId pdu_pool_id;
-*/
+
 osMemoryPoolId_t pdu_pool_id;
 extern osTimerId_t timeoutHandle;
 #define timeout_id timeoutHandle
@@ -96,7 +90,6 @@ static void message_error(uint8_t *msg)
 {
   if (msg != NULL)
   {
-    //TODO: Cambio CMSIS_V2 ACA(void)osPoolFree(pdu_pool_id, msg);
     osMemoryPoolFree(pdu_pool_id, msg);
     msg = NULL;
   }
@@ -111,18 +104,18 @@ static bool check_crc(uint8_t *msg, uint16_t len)
 }
 
 /********************** external functions definition ************************/
-void c2_parser_rx_cb(uint8_t data)
+void c2_parser_rx_cb(uint8_t *data_ptr)
 {
   static uint16_t msg_len = 0;
   static uint8_t *msg_ptr = NULL;
   static state_t state_reg = IDLE;
+  uint8_t data = *data_ptr;
 
   switch (state_reg)
   {
     case IDLE:
       if (SOM == data)
       {
-        //TODO: Cambio CMSIS_V2 msg = (uint8_t*)osPoolCAlloc(pdu_pool_id);
         msg_in = osMemoryPoolAlloc(pdu_pool_id, 0);
         if (NULL == msg_in)
         {
@@ -144,7 +137,7 @@ void c2_parser_rx_cb(uint8_t data)
         message_error(msg_in);
         state_reg = IDLE;
       }
-      else if (osTimerStop(timeout_id) == osOK)
+      else //if (osTimerStop(timeout_id) == osOK)
       {
         if (isxdigit(data) != 0u && islower(data) == 0u)
         {
@@ -159,11 +152,11 @@ void c2_parser_rx_cb(uint8_t data)
           state_reg = IDLE;
         }
       }
-      else
+     /*else
       {
         message_error(msg_in);
         state_reg = IDLE;
-      }
+      }*/
       break;
 
     case DATA_RECEIVE:
@@ -173,7 +166,7 @@ void c2_parser_rx_cb(uint8_t data)
         message_error(msg_in);
         state_reg = IDLE;
       }
-      else if (osTimerStop(timeout_id) == osOK)
+      else //if (osTimerStop(timeout_id) == osOK)
       {
         if (EOM == data)
         {
@@ -182,6 +175,7 @@ void c2_parser_rx_cb(uint8_t data)
           {
             message_error(msg_in);
           }
+          //TODO: Incluir acá la acción a ejecutarse cuando el paquete es válido
           state_reg = IDLE;
         }
         else
@@ -191,11 +185,11 @@ void c2_parser_rx_cb(uint8_t data)
           msg_len++;
         }
       }
-      else
+    /*  else
       {
         message_error(msg_in);
         state_reg = IDLE;
-      }
+      }*/
       break;
     default:
       break;
@@ -204,15 +198,8 @@ void c2_parser_rx_cb(uint8_t data)
 
 void c2_parser_init(void)
 {
-  //TODO: Setear los callback de la capa C1
- c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);
-//  crc8_init();
 
- /* TODO: Cambio, el time se crea en el main, podria hacerse acá tambien
-  timeout_id = osTimerCreate(osTimer(timeout), osTimerOnce, NULL);
-  if(timeout_id == NULL)
-
-  //TODO: Cambio CMSIS_V2, pdu_pool_id = osPoolCreate(osPool(pdu_pool));*/
+  c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);
 
   pdu_pool_id = osMemoryPoolNew(10, MAX_MSG_SIZE, NULL);
 }
@@ -258,6 +245,7 @@ void c2_parser_task(void *args)
       osMessageQueuePut(QueueOutputHandle, msg_out, 0, 0);
     }
   }
+  osDelay(10);
 }
 
 bool c2_is_new_message(void)

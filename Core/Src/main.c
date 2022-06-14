@@ -56,7 +56,7 @@ osThreadId_t TaskTestHandle;
 const osThreadAttr_t TaskTest_attributes = {
   .name = "TaskTest",
   .stack_size = 160 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for TaskC1 */
 osThreadId_t TaskC1Handle;
@@ -153,7 +153,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  c2_parser_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -195,7 +195,7 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of TaskTest */
-  TaskTestHandle = osThreadNew(task_test, NULL, &TaskTest_attributes);
+ // TaskTestHandle = osThreadNew(task_test, NULL, &TaskTest_attributes);
 
   /* creation of TaskC1 */
   TaskC1Handle = osThreadNew(c1_driver_task, NULL, &TaskC1_attributes);
