@@ -84,15 +84,19 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void c1_driver_task(void *args)
 {
-  uint8_t *msg_out = NULL;
+  uint8_t *msg_out = NULL, *msg_pdu=NULL;
 
   c1_driver_init(c2_parser_rx_cb);
 
   for (;;)
   {
-    osMessageQueueGet(QueueOutputHandle, (uint8_t *)&msg_out, 0, osWaitForever);
+    osMessageQueueGet(QueueOutputHandle, (uint8_t *)&msg_pdu, 0, osWaitForever);
 
-    c1_driver_tx(msg_out, strlen(msg_out));
+    size_t msg_out_len = strlen((const char *)msg_pdu);
+    msg_out = pvPortMalloc(msg_out_len);
+    memcpy(msg_out, msg_pdu, msg_out_len);
+
+    c1_driver_tx(msg_out, msg_out_len);
     vPortFree(msg_out);
     msg_out = NULL;
   }
