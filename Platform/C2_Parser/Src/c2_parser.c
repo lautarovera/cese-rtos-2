@@ -55,6 +55,8 @@
 #define ID_SIZE                 4u
 #define OPCPDE_SIZE             1u
 #define CRC_SIZE                2u
+#define SOM_SIZE                1u
+#define EOM_SIZE                1u
 #define TIMEOUT_MS              4u
 
 /********************** internal data declaration ****************************/
@@ -68,10 +70,10 @@ static void message_error(uint8_t *msg);
 static bool check_crc(uint8_t *msg, uint16_t len);
 
 /********************** internal data definition *****************************/
-
 osMemoryPoolId_t pdu_pool_id;
 extern osTimerId_t timeoutHandle;
 #define timeout_id timeoutHandle
+
 /********************** external data definition *****************************/
 static bool new_message = false;
 static bool timeout = false;
@@ -80,6 +82,7 @@ static uint8_t *msg_in = NULL;
 extern osMessageQueueId_t QueueDownstreamHandle;
 extern osMessageQueueId_t QueueUpstreamHandle;
 extern osMessageQueueId_t QueueOutputHandle;
+
 /********************** internal functions definition ************************/
 void timeout_cb(void *argument)
 {
@@ -119,6 +122,11 @@ static uint8_t *c2_create_sdu(uint8_t *msg)
 static bool c2_is_new_message(void)
 {
   return new_message;
+}
+
+static void c2_clear_new_message(void)
+{
+  new_message = false;
 }
 
 static void c2_parser_init(void)
@@ -224,7 +232,7 @@ void c2_parser_task(void *args)
   uint8_t *sdu = NULL;
   uint8_t *pdu = NULL;
   uint8_t *msg_out = NULL;
-  uint8_t id[ID_SIZE];
+  uint8_t id[ID_SIZE + 1] = {0u};
 
   c2_parser_init();
 
@@ -236,21 +244,22 @@ void c2_parser_task(void *args)
       memcpy(id, msg_in, ID_SIZE);
       osMemoryPoolFree(pdu_pool_id, msg_in);
 
-      osMessageQueuePut(QueueUpstreamHandle, (uint8_t *)&sdu, 0, osWaitForever);
+      osMessageQueuePut(QueueUpstreamHandle, (uint8_t *)&sdu, 0, 0);
 
       osMessageQueueGet(QueueDownstreamHandle, (uint8_t *)&pdu, 0, osWaitForever);
 
-      size_t msg_out_len = ID_SIZE + strlen((const char *)pdu) + CRC_SIZE;
-      msg_out = pvPortMalloc(msg_out_len);
+      size_t msg_out_len = SOM_SIZE + ID_SIZE + strlen((const char *)pdu) + CRC_SIZE + EOM_SIZE;
+      msg_out = pvPortMalloc(msg_out_len + 1);
 
-      memcpy(msg_out, id, ID_SIZE);
-      memcpy(&msg_out[ID_SIZE], pdu, strlen((const char *)pdu));
+      sprintf((char *)msg_out, "%s%s", id, pdu);
+      sprintf((char *)msg_out, "(%s%s%X)", id, pdu, crc8_calc(0u, (uint8_t*)msg_out, msg_out_len - CRC_SIZE - SOM_SIZE - EOM_SIZE));
+
       vPortFree(pdu);
       pdu = NULL;
 
-      sprintf((char *)&msg_out[msg_out_len - CRC_SIZE], "%X", crc8_calc(0u, (uint8_t*)msg_out, msg_out_len - CRC_SIZE));
+      osMessageQueuePut(QueueOutputHandle, (uint8_t *)&msg_out, 0, 0);
 
-      osMessageQueuePut(QueueOutputHandle, (uint8_t *)&msg_out, 0, osWaitForever);
+      c2_clear_new_message();
     }
   }
   osDelay(10);

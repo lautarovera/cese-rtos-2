@@ -489,7 +489,7 @@ void c3_app_task(void)
     }
     pdu = create_pdu(fsm.out_string);
 
-    osMessageQueuePut(QueueDownstreamHandle, (uint8_t*)&pdu, 0, osWaitForever);
+    osMessageQueuePut(QueueDownstreamHandle, (uint8_t*)&pdu, 0, 0);
   }
 }
 /********************** end of file ******************************************/
