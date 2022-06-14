@@ -60,7 +60,7 @@ extern "C" {
 /*
  * @brief
  */
-void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*));
+void c1_driver_init(void (*rx_cb)(uint8_t*));
 
 /*
  * @brief

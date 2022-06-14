@@ -57,16 +57,6 @@ extern "C" {
 
 /********************** external functions declaration ***********************/
 
-/**
- * @brief
- */
-void init_c3(void);
-
-/**
- * @brief
- */
-void c3_app_task(void);
-
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }

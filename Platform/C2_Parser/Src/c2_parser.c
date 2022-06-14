@@ -103,6 +103,28 @@ static bool check_crc(uint8_t *msg, uint16_t len)
   return value_crc == target_crc ? true : false;
 }
 
+static uint8_t *c2_create_sdu(uint8_t *msg)
+{
+  uint8_t *sdu = NULL;
+  uint16_t len = strlen((const char *)msg);
+
+  sdu = (uint8_t *)pvPortMalloc(len - ID_SIZE - CRC_SIZE);
+
+  memcpy(sdu, &msg[ID_SIZE], strlen((const char*)sdu));
+
+  return sdu;
+}
+
+static bool c2_is_new_message(void)
+{
+  return new_message;
+}
+
+static void c2_parser_init(void)
+{
+  pdu_pool_id = osMemoryPoolNew(10, MAX_MSG_SIZE, NULL);
+}
+
 /********************** external functions definition ************************/
 void c2_parser_rx_cb(uint8_t *data_ptr)
 {
@@ -196,32 +218,14 @@ void c2_parser_rx_cb(uint8_t *data_ptr)
   }
 }
 
-void c2_parser_init(void)
-{
-
-  c1_driver_init(&c2_parser_tx_cb , &c2_parser_rx_cb);
-
-  pdu_pool_id = osMemoryPoolNew(10, MAX_MSG_SIZE, NULL);
-}
-
-uint8_t *c2_create_sdu(uint8_t *msg)
-{
-  uint8_t *sdu = NULL;
-  uint16_t len = strlen((const char *)msg);
-
-  sdu = (uint8_t *)pvPortMalloc(len - ID_SIZE - CRC_SIZE);
-
-  memcpy(sdu, &msg[ID_SIZE], strlen((const char*)sdu));
-
-  return sdu;
-}
-
 void c2_parser_task(void *args)
 {
   uint8_t *sdu = NULL;
   uint8_t *pdu = NULL;
   uint8_t *msg_out = NULL;
   uint8_t id[ID_SIZE];
+
+  c2_parser_init();
 
   for (;;)
   {
@@ -235,10 +239,10 @@ void c2_parser_task(void *args)
 
       osMessageQueueGet(QueueDownstreamHandle, pdu, 0, 0);
 
-      msg_out = pvPortMalloc(ID_SIZE + strlen(pdu));
+      msg_out = pvPortMalloc(ID_SIZE + strlen((const char *)pdu));
 
       memcpy(msg_out, id, ID_SIZE);
-      memcpy(&msg_out[ID_SIZE], pdu, strlen(pdu));
+      memcpy(&msg_out[ID_SIZE], pdu, strlen((const char *)pdu));
       vPortFree(pdu);
       pdu = NULL;
 
@@ -248,18 +252,9 @@ void c2_parser_task(void *args)
   osDelay(10);
 }
 
-bool c2_is_new_message(void)
-{
-  return new_message;
-}
+//void c2_read_message(void)
+//{
+//  new_message = false;
+//}
 
-void c2_read_message(void)
-{
-  new_message = false;
-}
-
-void c2_parser_tx_cb(void)
-{
-
-}
 /********************** end of file ******************************************/

@@ -49,7 +49,6 @@
 #define UART_RX_IT_COUNT 1
 
 /********************** internal data declaration ****************************/
-static void (*tx_cb_func)(uint8_t*);
 static void (*rx_cb_func)(uint8_t*);
 static uint8_t rx_buffer[UART_RX_IT_COUNT];
 
@@ -60,8 +59,20 @@ static uint8_t rx_buffer[UART_RX_IT_COUNT];
 /********************** external data definition *****************************/
 extern osMessageQueueId_t QueueOutputHandle;
 extern UART_HandleTypeDef huart3;
+extern void c2_parser_rx_cb(uint8_t *data_ptr);
 
 /********************** internal functions definition ************************/
+static void c1_driver_init(void (*rx_cb)(uint8_t*))
+{
+  rx_cb_func = rx_cb;
+
+  HAL_UART_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
+}
+
+static void c1_driver_tx(uint8_t *data, uint16_t size)
+{
+  HAL_UART_Transmit(&huart3, data, size,100);
+}
 
 /********************** external functions definition ************************/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -71,22 +82,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   HAL_UART_Receive_IT(huart, rx_buffer, UART_RX_IT_COUNT);
 }
 
-void c1_driver_init(void (*tx_cb)(uint8_t*), void (*rx_cb)(uint8_t*))
-{
-  tx_cb_func = tx_cb;
-  rx_cb_func = rx_cb;
-
-  HAL_UART_Receive_IT(&huart3, rx_buffer, UART_RX_IT_COUNT);
-}
-
-void c1_driver_tx(uint8_t *data, uint16_t size)
-{
-  HAL_UART_Transmit(&huart3, data, size,100);
-}
-
 void c1_driver_task(void *args)
 {
   uint8_t *msg_out = NULL;
+
+  c1_driver_init(c2_parser_rx_cb);
 
   for (;;)
   {

@@ -448,21 +448,23 @@ static error_codes_t process_opcode(char *string_in, action_codes_t *opcode_out)
   }
   return error_code;
 }
-/********************** external functions definition ************************/
 
-void init_c3(void)
+static void c3_app_init(void)
 {
   //TODO init C3 and initialize C2
   //pdu_pool_id = osPoolCreate(osPool(pdu_pool));
   //msg_response_pool_id = osPoolCreate(osPool(msg_response_pool));
 }
 
+/********************** external functions definition ************************/
 void c3_app_task(void)
 {
   uint8_t *sdu = NULL;
   state_t fsm;
   error_codes_t error = NO_ERROR;
   char error_response[10];
+
+  c3_app_init();
 
   //TODO determine how should c3 work
   while (1)
@@ -471,7 +473,7 @@ void c3_app_task(void)
 
     state_reset(&fsm);
 //TODO: Verificar si esta bien copiar al dato fsm.in_string
-    memcpy(fsm.in_string, sdu, strlen(sdu));
+    memcpy(fsm.in_string, sdu, strlen((const char *)sdu));
     vPortFree(sdu);
     sdu = NULL;
 

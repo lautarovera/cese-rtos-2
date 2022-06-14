@@ -97,7 +97,7 @@ void task_test(void const *argument)
   uint8_t *tmp = NULL ,i=0 , k=5;
 
 
-  c2_parser_init();
+//  c2_parser_init();
 
   /*
    * Envío de paquete correcto 10 paquetes
@@ -114,7 +114,7 @@ void task_test(void const *argument)
 
     for (i = 0; i < SIZE_PACKET; i++)
     {
-      c2_parser_rx_cb(*tmp++);
+//      c2_parser_rx_cb(*tmp++);
       osDelay(DELAY_MS);
       // Se intercala demora
       if (k == 5)
@@ -124,15 +124,15 @@ void task_test(void const *argument)
     }
 
     osDelay(10 * DELAY_MS);
-    if (c2_is_new_message())
-    {
-      vPrintString("Mensaje correcto \n");
-      c2_read_message();
-    }
-    else
-    {
-      vPrintString("Error detectado \n");
-    }
+//    if (c2_is_new_message())
+//    {
+//      vPrintString("Mensaje correcto \n");
+//      c2_read_message();
+//    }
+//    else
+//    {
+//      vPrintString("Error detectado \n");
+//    }
 
     osDelay(DELAY_MS);
   }

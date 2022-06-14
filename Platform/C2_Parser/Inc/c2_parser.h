@@ -56,14 +56,8 @@ extern "C" {
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
-void c2_parser_init(void);
-void c2_read_message(void);
-bool c2_is_new_message(void);
-uint8_t *c2_create_sdu(uint8_t *msg);
-
 void c2_parser_rx_cb(uint8_t *data_ptr);
-void timeout_cb(void *argument);
-void c2_parser_tx_cb(void);
+
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
 }
